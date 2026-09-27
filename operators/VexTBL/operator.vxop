@@ -1,0 +1,10 @@
+# VexTBL — small tables for Vexel (native, no deps)
+name = VexTBL
+version = 1.0.0
+description = Sort, filter and read vec-of-rows tables (csv_parse output): tbl_cols, tbl_cell, tbl_col, tbl_sort, tbl_pick
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexTBL.dll
+provides = tbl_cols/1, tbl_cell/3, tbl_col/2, tbl_sort/2, tbl_pick/3

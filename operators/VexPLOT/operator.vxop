@@ -1,0 +1,10 @@
+# VexPLOT — ASCII charts for Vexel (native, no deps)
+name = VexPLOT
+version = 1.0.0
+description = Console charts from vecs of numbers: plot_bar, plot_line
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexPLOT.dll
+provides = plot_bar/2, plot_line/3
