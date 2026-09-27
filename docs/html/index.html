@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — документация</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a class="here" href="index.html">Обзор</a>
+  <a href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a href="language.html">Язык и метки</a>
+  <a href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a href="operators.html">Операторы и менеджер</a>
+  <a href="abi.html">Native ABI</a>
+  <a href="creating-operator.html">Свой оператор</a>
+  <a href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a href="tools.html">Shop tools</a>
+  <a href="vex3d.html">Vex3D</a>
+</nav>
+<main>
+<h1><span class="m">V</span>exel — верстак с метками</h1>
+<p class="sub">Маленький язык: смысл как в C, лёгкость как в Python, вид — свой. Плюс расширяемая экосистема операторов.</p>
+
+<h2>30 секунд до первой программы</h2>
+<pre class="vx">> "Hello, vex!"</pre>
+<pre class="out"><code>Hello, vex!</code></pre>
+<p>Запуск:</p>
+<pre><code>build.bat
+vexel.exe !vex_run hello.vx</code></pre>
+
+<h2>Идея за 7 строк</h2>
+<p>Каждая строка начинается с метки-руны. Программа — верстак, выполняется сверху вниз, отдельного <code>main</code> нет:</p>
+<pre class="vx">@ x : 12
+? x > 10 :
+  > "big"
+!
+  > "small"
+.
+* 3 :
+  > it
+.
+& add a b :
+  = a + b
+.
+> add # 2, 3
+> risky # 0 ?? 0 - 1</pre>
+
+<table>
+<tr><th>Метка</th><th>Смысл</th></tr>
+<tr><td><span class="rune">@</span></td><td>ячейка — <code>@ x : 10</code>; оператор — <code>@ VexGUI</code></td></tr>
+<tr><td><span class="rune">></span></td><td>показ наружу (печать)</td></tr>
+<tr><td><span class="rune">? ! .</span></td><td>развилка вместо if/else</td></tr>
+<tr><td><span class="rune">* .</span></td><td>круг вместо for/while, <code>it</code> — номер круга</td></tr>
+<tr><td><span class="rune">& .</span></td><td>инструмент (функция)</td></tr>
+<tr><td><span class="rune">=</span></td><td>отдача результата (внутри инструмента)</td></tr>
+<tr><td><span class="rune">#</span></td><td>призыв: <code>add # 2, 3</code> (без скобок)</td></tr>
+<tr><td><span class="rune">??</span></td><td>подхват: <code>fail</code> заменяется правым боком</td></tr>
+<tr><td><span class="rune">;</span></td><td>заметка (комментарий)</td></tr>
+</table>
+
+<h2>Карта документации</h2>
+<ul>
+<li><a href="language.html">Язык и метки</a> — значения, биты, развилки, круги, инструменты, <code>fail</code>.</li>
+<li><a href="cli.html">CLI</a> — все 16 команд <code>!vex_*</code> с примерами сессий.</li>
+<li><a href="operators.html">Операторы и менеджер</a> — формат <code>.vxop</code>, установка, зависимости.</li>
+<li><a href="operator_api.html">Призывы со скамьи</a> — как код вызывает операторы.</li>
+<li><a href="abi.html">Native ABI</a> — контракт для C-операторов.</li>
+<li><a href="creating-operator.html">Свой оператор</a> — путь за 6 шагов.</li>
+<li><a href="vexgui.html">VexGUI</a>, <a href="vexfs.html">VexFS</a>, <a href="vexec.html">VexExec</a> — три shipped-оператора.</li>
+</ul>
+
+<h2>Архитектура</h2>
+<pre><code>                 VEXEL
+                   |
+             +-----+-----+
+             |           |
+            CORE      OPERATORS
+             |           |
+             |      +----+----+
+             |      |    |    |
+             |    VexGUI Net  Game (roadmap)
+             |
+             VM (свой байткод VX_*, стековая)</code></pre>
+<p>Core — это язык + compiler + VM + runtime + operator system. Всё тяжёлое живёт в операторах.</p>
+
+<footer>Vexel 0.1 · docs/html · открой index.html в браузере, интернет не нужен.</footer>
+</main>
+</div>
+</body>
+</html>

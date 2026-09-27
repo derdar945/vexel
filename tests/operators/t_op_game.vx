@@ -1,0 +1,11 @@
+; VexGame canvas, headless: fill, px, getpx, size, tick, close
+@ VexGame
+@ g : game # 64, 64, "t"
+> fill # g, 255
+> getpx # g, 0, 0
+> px # g, 10, 20, 16711680
+> getpx # g, 10, 20
+> getpx # g, 99, 99 ?? "oob"
+> size # g
+> tick # g
+> close # g

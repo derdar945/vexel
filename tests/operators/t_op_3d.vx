@@ -1,0 +1,11 @@
+; Vex3D canvas, headless: draw once, read pixels back
+@ Vex3D
+@ s : scene # 100, 100, "t"
+@ m : cube #
+@ o : spawn # s, m, 0, 0, 5
+turn # o, 20, 30, 0
+> draw # s
+> getpx # s, 50, 50
+> getpx # s, 0, 0
+> tick # s
+> close # s

@@ -1,0 +1,27 @@
+; VexSYS demo — env, sleep, random, args, fail as value (2.0.0)
+@ VexSYS
+
+> set_env # "VEX_HELLO", "tide"
+> env # "VEX_HELLO"
+> has_env # "VEX_HELLO"
+> env # "NOPE_XYZ" ?? "dry"
+> unset_env # "VEX_HELLO"
+> has_env # "VEX_HELLO"
+
+> sleep # 10
+> "woke"
+
+> rand # 100
+> rand_range # 10, 20
+> rand # 0 ?? "bad range"
+> uuid #
+> choice # [10 20 30]
+> shuffle # [1 2 3 4 5]
+
+> args #
+> len # args #
+
+> time #
+> time_ms #
+> date #
+> uptime #

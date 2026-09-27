@@ -1,0 +1,15 @@
+; edge: rescue in condition, negative circle, at on text, escapes, nested it
+? fail ?? 1 :
+  > "y"
+.
+* 0 - 5 :
+  > "never"
+.
+> "after"
+> at # "hello", 1
+> "a\nb"
+* 2 :
+  * 3 :
+    > it
+  .
+.

@@ -1,0 +1,10 @@
+# VexGUI — official Vexel GUI operator (native, Win32)
+name = VexGUI
+version = 1.0.0
+description = Lightweight native windows, text, buttons and inputs for Vexel
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexGUI.dll
+provides = version/0, window/3, show/1, open/1, close/1, run/2, text/4, button/4, input/3, editor/5, list/5, list_set/2, selected/1, set_text/2, get_text/1, clicked/1, changed/1, size/1

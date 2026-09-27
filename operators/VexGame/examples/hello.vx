@@ -1,0 +1,41 @@
+; VexGame hello — bouncing sprite. Speed lives in slots because
+; `@` inside a tool is local: put/get cells survive between steps.
+@ VexGame
+
+@ g : make # "Vex ball", 480, 320
+@ bg : color # 12, 12, 24
+@ red : color # 255, 90, 90
+@ b : spr # g, 40, 60, 28, 28, red
+
+put # g, 0, 3
+put # g, 1, 2
+
+& step :
+  cls # g, bg
+  @ p : pos # b
+  @ x : at # p, 0
+  @ y : at # p, 1
+  move # b, (get # g, 0), (get # g, 1)
+  ? x > 452 :
+    put # g, 0, 0 - 3
+  !
+    ? x < 0 :
+      put # g, 0, 3
+    .
+  .
+  ? y > 292 :
+    put # g, 1, 0 - 2
+  !
+    ? y < 0 :
+      put # g, 1, 2
+    .
+  .
+  draw # g
+  flip # g
+  = open # g
+.
+
+> show # g
+> size # g
+> run # g, "step"
+> "bye"

@@ -1,0 +1,16 @@
+; sys.vx — VexSYS bench: system in VexFS style (2.0.0)
+@ VexSYS
+
+> "os: " + os # + " " + os_ver #
+> "arch: " + arch #
+> "cpu: " + str # cpu #
+> "user: " + user # ?? "nobody"
+> "host: " + hostname # ?? "nowhere"
+> cwd #
+> pid #
+> time #
+> date #
+> rand # 100
+> args #
+> upper # "tide"
+> abspath # "."

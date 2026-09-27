@@ -1,0 +1,10 @@
+# Vex3D — tiny 3D operator for Vexel (native, Win32, software rasterizer)
+name = Vex3D
+version = 1.0.0
+description = Scenes, objects, canvas-free 3D for Vexel games (no engine libs)
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = Vex3D.dll
+provides = scene/3, draw/1, close/1, open/1, frame/2, tick/1, mesh/1, cube/0, spawn/5, kill/1, move/4, turn/4, scale/2, color/2, cam/5, getpx/3, key/2, size/1

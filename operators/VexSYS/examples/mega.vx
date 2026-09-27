@@ -1,0 +1,88 @@
+; VexSYS mega — все 64 глагола одним проходом
+@ VexSYS
+
+; --- identity ---
+> version #
+> os #
+> arch #
+> os_ver #
+> cpu #
+> mem #
+> uptime #
+> tick #
+> path_sep #
+
+; --- who/where ---
+> user # ?? "nobody"
+> hostname # ?? "nowhere"
+> cwd #
+> exe #
+> pid #
+> args #
+
+; --- time ---
+> time #
+> time_ms #
+> date #
+> date_utc #
+> sleep # 5
+
+; --- env ---
+> set_env # "VEX_MEGA", "123"
+> env # "VEX_MEGA"
+> has_env # "VEX_MEGA"
+> len # env_all #
+> unset_env # "VEX_MEGA"
+
+; --- path ---
+> join # "a", "b.txt"
+> base # "a/b.txt"
+> dir_name # "a/b.txt"
+> ext # "a/b.txt"
+> stem # "a/b.txt"
+> abspath # "."
+> is_abs # cwd #
+> is_file # exe #
+> is_dir # cwd #
+> size # exe #
+> mtime # exe #
+> which # "cmd" ?? "no cmd"
+
+; --- fs write (no trash: "." already exists counts as ok) ---
+> mkdir # "."
+> is_dir # "."
+
+; --- random ---
+> rand # 100
+> rand_range # 5, 15
+> len # rand_bytes # 8
+> choice # [7 8 9]
+> shuffle # [1 2 3]
+> uuid #
+
+; --- strings ---
+> upper # "vex tide 123"
+> lower # "VEX TIDE"
+> trim # "  tide  "
+> split # "a,b,c", ","
+> lines # "one\ntwo\nthree"
+> str_join # ", ", ["a" "b" "c"]
+> starts # "tidepool", "tide"
+> ends # "tidepool", "pool"
+> contains # "tidepool", "dep"
+> replace # "aaa", "a", "b"
+
+; --- math ---
+> abs # 0 - 5
+> floor # 2.7
+> ceil # 2.2
+> sqrt # 16
+> pow # 2, 8
+> min # 3, 7
+> max # 3, 7
+> clamp # 99, 0, 10
+
+; --- fail is value ---
+> env # "NOPE_XYZ" ?? "dry"
+> size # "нет-такого.txt" ?? 0 - 1
+> sqrt # 0 - 1 ?? "no root"

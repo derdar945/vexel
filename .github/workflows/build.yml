@@ -1,0 +1,45 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MinGW
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-make
+
+      - name: Configure
+        shell: msys2 {0}
+        run: cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        shell: msys2 {0}
+        run: cmake --build build
+
+      - name: Smoke
+        shell: cmd
+        run: |
+          copy /y build\vexel.exe vexel.exe
+          vexel.exe !vex_version
+          vexel.exe !vex_run examples\hello.vx
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: vexel-windows
+          path: |
+            vexel.exe
+            operators/VexGUI/VexGUI.dll
+            operators/VexGUI/operator.vxop

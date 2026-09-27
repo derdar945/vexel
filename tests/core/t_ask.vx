@@ -1,0 +1,14 @@
+? 1 :
+  > "wet-branch"
+!
+  > "dry-branch"
+.
+? 0 :
+  > "no"
+!
+  > "yes-fallback"
+.
+? "" :
+  > "no"
+.
+> "done"

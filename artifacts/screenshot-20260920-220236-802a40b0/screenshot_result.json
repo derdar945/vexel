@@ -1,0 +1,13 @@
+{
+  "status": "not_testable",
+  "session_key": "default",
+  "run_name": null,
+  "final_url": "http://localhost:8931/index.html",
+  "viewport": {
+    "width": 1280,
+    "height": 800,
+    "device_scale_factor": 1.0
+  },
+  "screenshot_path": null,
+  "summary": "Could not reach http://localhost:8931/index.html before opening the browser: All connection attempts failed"
+}

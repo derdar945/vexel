@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — shop tools</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a href="index.html">Обзор</a>
+  <a href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a href="language.html">Язык и метки</a>
+  <a href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a href="operators.html">Операторы и менеджер</a>
+  <a href="abi.html">Native ABI</a>
+  <a href="creating-operator.html">Свой оператор</a>
+  <a href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a class="here" href="tools.html">Shop tools</a>
+</nav>
+<main>
+<h1><span class="m">S</span>hop tools</h1>
+<p class="sub">Маленькие команды вокруг скамьи: форматтер, линт, тесты, отладчик, бенчи, LSP.</p>
+
+<h2><code>!vex_fmt</code> — форматтер</h2>
+<p>Ровняет отступы (2 пробела на блок), режет хвостовые пробелы. Строки, комменты и скобки лексятся по-настоящему. Без <code>-w</code> — в stdout, с <code>-w</code> — перезапись. Идемпотентен.</p>
+
+<h2><code>!vex_lint</code> — статика без запуска</h2>
+<p>Exit 0 чисто, 1 предупреждения, 2 битый файл: непрочитанные ячейки, всегда-мокрые/сухие развилки, круги на 0, пустые ветки, константное деление на ноль, тень встроенных имён.</p>
+
+<h2><code>!vex_test</code> — ассёрты как инструменты</h2>
+<p>Гоняет <code>main</code> как сетап, потом каждый <code>&amp; test_*</code> без марок: мокро — PASS. См. <code>tests/core/t_testdemo.vx</code>.</p>
+
+<h2><code>!vex_debug</code> — машинный отладчик</h2>
+<p>Шаг по инструкциям настоящей VM, ячейки и стек наружу: <code>s N</code>, <code>r</code>, <code>g</code>, <code>v</code>, <code>d</code>, <code>q</code>. Им же гонялся само-хостный лексер.</p>
+
+<h2><code>!vex_lsp</code> — языковой сервер</h2>
+<p>JSON-RPC поверх stdio: initialize, didOpen/didChange, hover, completion, definition, documentSymbol. Диагностика — ровно ошибки компилятора. Детали: <code>docs/lsp.md</code>.</p>
+
+<h2><code>benches/</code> — самозамер</h2>
+<p>fib(22), 200k кругов, 50k призывов; время — через <code>time_ms #</code> из VexSYS. Компилятор сворачивает чисто-числовые поддеревья, так что меряется VM.</p>
+
+<footer>Vexel 0.1 · <a href="index.html">Обзор</a> · доки: <a href="cli.html">CLI</a>.</footer>
+</main>
+</div>
+</body>
+</html>

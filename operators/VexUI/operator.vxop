@@ -1,0 +1,10 @@
+# VexUI — beautiful dark UI operator for Vexel (user32/gdi32 only)
+name = VexUI
+version = 1.0.0
+description = Dark themed UI: cards, pill buttons, progress, styled labels and inputs
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexUI.dll
+provides = ui_window/3, ui_show/1, ui_open/1, ui_close/1, ui_dark/1, ui_run/2, ui_title/5, ui_label/6, ui_btn/7, ui_input/4, ui_card/6, ui_prog/5, ui_pset/2, ui_sep/4, ui_get/1, ui_set/2, ui_clicked/1

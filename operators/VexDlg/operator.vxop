@@ -1,0 +1,10 @@
+# VexDlg — native Win32 dialogs for Vexel (user32 only)
+name = VexDlg
+version = 1.0.0
+description = Message boxes for Vexel programs: dlg_msg, dlg_ok, dlg_ask
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexDlg.dll
+provides = dlg_msg/2, dlg_ok/2, dlg_ask/2

@@ -1,0 +1,14 @@
+; tiny VexNet server: answers every knock, lands on /bye
+@ VexNet
+@ VexSYS
+
+& step req :
+  ? contains # req, "/bye" :
+    = fail
+  !
+    = "knock knock"
+  .
+.
+
+> serve # 19311, "step"
+> "landed"

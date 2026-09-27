@@ -1,0 +1,9 @@
+; tool.vx — инструмент вместо function/return
+& add a b :
+  = a + b
+.
+& double x :
+  = x * 2
+.
+> add # 2, 3
+> double # 21

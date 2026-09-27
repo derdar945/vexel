@@ -1,0 +1,10 @@
+# VexKV — file-backed key-value store for Vexel (native, no deps)
+name = VexKV
+version = 1.0.0
+description = Persistent string map in one text file: kv_set, kv_get, kv_del, kv_list, kv_has
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexKV.dll
+provides = kv_set/3, kv_get/2, kv_del/2, kv_list/1, kv_has/2

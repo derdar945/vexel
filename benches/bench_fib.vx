@@ -1,0 +1,13 @@
+@ VexSYS
+& fib n :
+  ? n < 2 :
+    = n
+  !
+    @ a : fib # n - 1
+    @ b : fib # n - 2
+    = a + b
+  .
+.
+@ t : time_ms #
+> fib # 22
+> (time_ms #) - t

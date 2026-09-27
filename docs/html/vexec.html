@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — VexExec</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a href="index.html">Обзор</a>
+  <a href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a href="language.html">Язык и метки</a>
+  <a href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a href="operators.html">Операторы и менеджер</a>
+  <a href="abi.html">Native ABI</a>
+  <a href="creating-operator.html">Свой оператор</a>
+  <a href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a href="tools.html">Shop tools</a>
+  <a href="vex3d.html">Vex3D</a>
+  <a class="here" href="vexec.html">VexExec</a>
+</nav>
+<main>
+<h1><span class="m">V</span>exExec 1.0.0 — запуск программ</h1>
+<p class="sub">Нативный оператор, Win32. Один глагол: выполнить команду, забрать вывод.</p>
+
+<pre class="vx">@ VexExec
+> exec # "vexel.exe !vex_check main.vx", 10000</pre>
+
+<h2><code>exec # cmd, timeout_ms</code></h2>
+<ul>
+<li>Выполняет командную строку, ждёт, отдаёт слитые stdout+stderr текстом.</li>
+<li><code>fail</code>, если: не стартует, таймаут вышел (мс, clamp 100–600000 — зависший ребёнок прибивается), вывод упёрся в лимит 8 МБ.</li>
+<li>Наследует cwd скамьи. Код возврата не отдаётся — только текст (типичный паттерн: гнать <code>!vex_check</code> и разбирать текст).</li>
+</ul>
+<pre class="vx">@ VexExec
+@ r : exec # "vexel.exe !vex_run main.vx", 15000 ?? "exec fail"
+> r</pre>
+
+<h2>Зачем</h2>
+<p>Инструмент для инструментов: IDE VexEd жмёт Run/Check именно так. Таймаут обязателен, чтобы чужая зависшая скамья не вешала твою.</p>
+
+<h2>Откуда ставится</h2>
+<pre><code>!vex_add VexExec
+!vex_info VexExec</code></pre>
+<p>Исходник: <code>operators/VexExec/</code> (манифест + <code>src/vexec.c</code> + README).</p>
+
+<footer>Vexel 0.1 · <a href="index.html">Обзор</a> · рядом: <a href="vexfs.html">VexFS</a>.</footer>
+</main>
+</div>
+</body>
+</html>

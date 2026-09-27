@@ -1,0 +1,5 @@
+; operator fail is a value: rescue it
+@ VexGUI
+> close # 999 ?? "no window"
+> type # 1 / 0
+> clicked # 999 ?? "bad handle"

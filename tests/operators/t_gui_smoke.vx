@@ -1,0 +1,7 @@
+; real window lifecycle: open, close, open-again reads closed
+@ VexGUI
+@ w : window # "smoke", 300, 200
+> open # w
+> close # w
+> open # w
+> size # w ?? "gone"

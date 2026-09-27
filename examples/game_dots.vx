@@ -1,0 +1,19 @@
+; bouncing dot: 200 frames, then land.
+; No mutable state: x is a pure function of tick.
+@ VexGame
+
+@ g : game # 320, 200, "dots"
+
+& step :
+  fill # g, 0
+  px # g, ((tick # g) * 2) % 320, 100, 16711680
+  ? (tick # g) > 200 :
+    = fail
+  !
+    = open # g
+  .
+.
+
+> frame # g, "step"
+> tick # g
+> close # g

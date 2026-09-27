@@ -1,0 +1,8 @@
+; VexFS roundtrip in the suite sandbox
+@ VexFS
+@ f : "tests/operators/io_tmp.txt"
+> write # f, "a\nb"
+> read # f
+> exists # f
+> remove # f
+> exists # f

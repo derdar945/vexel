@@ -1,0 +1,15 @@
+; VexSYS hello — system bench in VexFS style (2.0.0, old verbs still work)
+@ VexSYS
+
+> "os: " + os #
+> "ver: " + os_ver #
+> "arch: " + arch #
+> "cpu: " + str # cpu #
+> "user: " + user # ?? "nobody"
+> "host: " + hostname # ?? "nowhere"
+> "cwd: " + cwd #
+> pid #
+> time #
+> date #
+> date_utc #
+> version #

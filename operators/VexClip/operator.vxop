@@ -1,0 +1,10 @@
+# VexClip — Windows clipboard for Vexel (user32 only)
+name = VexClip
+version = 1.0.0
+description = Clipboard text for Vexel programs: clip_get, clip_set, clip_has
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexClip.dll
+provides = clip_get/0, clip_set/1, clip_has/0

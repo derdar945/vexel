@@ -1,0 +1,10 @@
+# VexCSV — small CSV for Vexel (native, no deps)
+name = VexCSV
+version = 1.0.0
+description = Parse CSV text into vecs of rows: csv_parse, csv_rows, csv_cell
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexCSV.dll
+provides = csv_parse/1, csv_rows/1, csv_cell/3

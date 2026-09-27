@@ -1,0 +1,20 @@
+; rotating cube: pure function of tick, 300 frames, then land
+@ Vex3D
+
+@ s : scene # 320, 200, "cube"
+@ m : cube #
+@ o : spawn # s, m, 0, 0, 5
+color # o, 16744448
+
+& step :
+  turn # o, (tick # s), ((tick # s) * 2), 0
+  ? tick # s > 300 :
+    = fail
+  !
+    = open # s
+  .
+.
+
+> frame # s, "step"
+> tick # s
+> close # s

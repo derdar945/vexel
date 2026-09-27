@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — язык и метки</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a href="index.html">Обзор</a>
+  <a href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a class="here" href="language.html">Язык и метки</a>
+  <a href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a href="operators.html">Операторы и менеджер</a>
+  <a href="abi.html">Native ABI</a>
+  <a href="creating-operator.html">Свой оператор</a>
+  <a href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a href="tools.html">Shop tools</a>
+  <a href="vex3d.html">Vex3D</a>
+</nav>
+<main>
+<h1><span class="m">Я</span>зык и метки</h1>
+<p class="sub">Полное описание Vexel: программа, значения, все 7 видов строк, выражения, области, ошибки.</p>
+
+<h2>1. Модель программы</h2>
+<p>Файл <code>.vx</code> — это верстак. Выполняется сверху вниз. Точки входа <code>main</code> нет, обёрток нет, точка с запятой и фигурные скобки запрещены самой грамматикой. Пустая программа (одни заметки) — валидна и ничего не делает.</p>
+<p>Блоки открываются двоеточием <code>:</code> в конце строки и закрываются точкой <code>.</code> на отдельной строке. Отступы значения не имеют. Перевод строки — граница тока: почти всё, что может висеть между строками, запрещено (например, аргументы призыва <code>#</code> живут строго на одной строке).</p>
+
+<h2>2. Значения — одна сущность, четыре лика</h2>
+<p>Вместо <code>int/float/bool/string/array</code> — одно значение с четырьмя ликами:</p>
+<table>
+<tr><th>Лик</th><th>Примеры</th><th>Заметки</th></tr>
+<tr><td>число</td><td><code>10</code>, <code>3.5</code>, <code>.5</code></td><td>всегда f64; целые печатаются без точки</td></tr>
+<tr><td>текст</td><td><code>"vex"</code>, <code>"a\nb"</code></td><td>UTF-8, escapes <code>\n \t \" \\</code></td></tr>
+<tr><td>вектор</td><td><code>[10 20]</code>, <code>[]</code>, <code>[1, "a"]</code></td><td>пробел и запятая равнозначны; смешанные типы можно</td></tr>
+<tr><td><code>fail</code></td><td><code>fail</code>, <code>10 / 0</code></td><td>рухнувшее значение (см. §7)</td></tr>
+</table>
+<div class="note"><b>Правда — это влажность.</b> Сухие: <code>fail</code>, <code>0</code>, <code>""</code>, <code>[]</code>. Всё остальное мокрое. Отдельного типа «булево» нет — <code>and/or/not</code> отдают <code>1</code>/<code>0</code>.</div>
+
+<h2>3. Ячейки — <span class="rune">@</span></h2>
+<pre class="vx">@ x : 10
+@ y : 32
+@ x : x + 1</pre>
+<p>Первая запись куёт ячейку, повторная — обновляет. Внутри инструмента <code>@</code> — локальная ячейка (параметры + свои), снаружи — глобальная. Вложенные круги и развилки новых областей не создают. Неизвестное имя — ошибка компиляции:</p>
+<pre class="err"><code>vexel: 1:3: unknown cell '@ nope' — forge it first</code></pre>
+
+<h2>4. Показ — <span class="rune">></span></h2>
+<pre class="vx">> x + y * 2
+> "sum: " + str # x</pre>
+<p>Снимает значение и печатает: числа — <code>14</code>/<code>2.5</code>, тексты — как есть, векторы — <code>[10 20 30]</code>, <code>fail</code> — словом <code>fail</code>.</p>
+
+<h2>5. Развилка — <span class="rune">? ! .</span></h2>
+<pre class="vx">@ x : 12
+? x > 10 :
+  > "big"
+!
+  > "small"
+.
+? x == 12 :
+  > "twelve!"
+.</pre>
+<p><code>?</code> считает влажность условия. Мокро — верхняя часть, сухо — нижняя после <code>!</code> (может отсутствовать). Вложенность свободная. Незакрытая развилка — ошибка с указанием строки.</p>
+
+<h2>6. Круг — <span class="rune">* .</span></h2>
+<pre class="vx">* 4 :
+  > it * it
+.</pre>
+<pre class="out"><code>0
+1
+4
+9</code></pre>
+<p>Счёт вычисляется один раз: число → <code>int(e)</code> (отрицательное → 0), <code>fail</code> → 0, мокрое-не-число → 1. <code>it</code> — номер круга от 0; вложенный круг затеняет внешний. Вне круга <code>it</code> читается как <code>fail</code>.</p>
+<div class="warn"><b>Круг — счётный.</b> «Крутить, пока открыто» им не выразить — для долгих дежурств (цикл сообщений GUI) оператор даёт свой бег: <code>run # w, "step"</code> в <a href="vexgui.html">VexGUI</a>.</div>
+
+<h2>7. Инструменты — <span class="rune">& .</span> и отдача <span class="rune">=</span></h2>
+<pre class="vx">& add a b :
+  = a + b
+.
+& fact n :
+  ? n <= 1 :
+    = 1
+  !
+    = n * fact # n - 1
+  .
+.
+> add # 2, 3
+> fact # 5</pre>
+<p>Параметры — через пробел, без скобок и запятых (<code>& clock :</code> — ноль параметров). <code>= e</code> мгновенно отдаёт <code>e</code> зовущему; без <code>=</code> инструмент отдаёт <code>fail</code>. <code>=</code> живёт только внутри инструмента. Призыв: <code>имя # a1, a2</code>, ноль аргументов — <code>имя #</code>. Инструмент должен быть выкован выше первого призыва; перековка — ошибка; рекурсия разрешена.</p>
+<p>Встроенные (перекрываются своими <code>&</code>):</p>
+<table>
+<tr><th>Глагол</th><th>Смысл</th></tr>
+<tr><td><code>len # x</code></td><td>длина вектора/текста, иначе <code>fail</code></td></tr>
+<tr><td><code>at # v, i</code></td><td>элемент / символ (текст длины 1), мимо — <code>fail</code></td></tr>
+<tr><td><code>type # x</code></td><td><code>"number"</code> / <code>"text"</code> / <code>"vec"</code> / <code>"fail"</code></td></tr>
+<tr><td><code>str # x</code></td><td>текстовое отображение</td></tr>
+</table>
+
+<h2>8. Выражения и приоритеты</h2>
+<p>От слабого к сильному: <code>??</code> → <code>or</code> → <code>and</code> → <code>== !=</code> → <code>&gt; &lt; &gt;= &lt;=</code> → <code>+ -</code> → <code>* / %</code> → <code>not</code>, унарный <code>-</code> → призыв <code>#</code> → первичное. Скобки <code>( )</code> и векторы <code>[ ]</code> — как обычно, внутри них переводы строк разрешены.</p>
+<ul>
+<li><code>+</code>: число+число — сумма, иначе конкатенация отображений.</li>
+<li><code>- * / %</code>: числа (<code>"ab" * 3</code> — повтор); деление/мод на ноль — <code>fail</code>.</li>
+<li><code>== !=</code>: любые лики, глубоко (<code>fail == fail</code> — мокро).</li>
+<li><code>&gt; &lt; &gt;= &lt;=</code>: только числа, иначе <code>fail</code>.</li>
+<li><code>and/or</code> — жадные (оба бока считаются), <code>not</code> — инверсия влажности.</li>
+<li><code>f # a ?? b</code> — это <code>(f # a) ?? b</code>: аргументы призыва останавливаются перед <code>??</code>. Чтобы протащить подхват внутрь — скобки: <code>f # (a ?? b)</code>.</li>
+</ul>
+
+<h2>9. Ошибки — <code>fail</code> и <span class="rune">??</span></h2>
+<pre class="vx">& risky d :
+  = 100 / d
+.
+> risky # 0 ?? 0 - 1
+> at # [1], 9 ?? "empty"</pre>
+<p><code>try/catch/throw</code> нет. Рухнувший ток — значение <code>fail</code>: течёт дальше (<code>fail + 5</code> → <code>fail</code>), молчит, лечится якорем <code>a ?? b</code> (правый бок ленивый, цепочки <code>a ?? b ?? "берег"</code> — можно). Проверка: <code>type # x == "fail"</code>.</p>
+
+<h2>10. Голый ток</h2>
+<p>Строка-выражение без руны вычисляется, результат выбрасывается — так зовут ради эффекта:</p>
+<pre class="vx">set_text # hello, "Hi!"</pre>
+
+<h2>11. Полный пример</h2>
+<pre class="vx">; cells, ask, loop, tool, vec, rescue — весь язык на одной скамье
+@ c : [10 20 30]
+> len # c
+* len # c :
+  ? at # c, it > 15 :
+    > at # c, it
+  !
+    > "small"
+  .
+.
+& double x :
+  = x * 2
+.
+> double # 21
+> at # c, 99 ?? "сухо, вброд"</pre>
+
+<footer>Vexel 0.1 · <a href="index.html">Обзор</a> · дальше: <a href="operator_api.html">призывы операторов</a>.</footer>
+</main>
+</div>
+</body>
+</html>

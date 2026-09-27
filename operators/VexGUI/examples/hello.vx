@@ -1,0 +1,20 @@
+; VexGUI hello — window, title, text, button, input, click, close.
+@ VexGUI
+
+@ w : window # "Vexel — hello", 420, 260
+@ hello : text # w, "press the mark", 20, 20
+@ name : input # w, 20, 60
+@ go : button # w, "Say hello", 20, 110
+
+& step :
+  ? clicked # go :
+    @ who : get_text # name ?? "tide"
+    set_text # hello, "Hello, " + who + "!"
+  .
+  = open # w
+.
+
+> show # w
+> run # w, "step"
+
+> "bye"

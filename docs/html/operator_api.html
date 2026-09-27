@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — призывы операторов</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a href="index.html">Обзор</a>
+  <a href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a href="language.html">Язык и метки</a>
+  <a class="here" href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a href="operators.html">Операторы и менеджер</a>
+  <a href="abi.html">Native ABI</a>
+  <a href="creating-operator.html">Свой оператор</a>
+  <a href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a href="tools.html">Shop tools</a>
+  <a href="vex3d.html">Vex3D</a>
+</nav>
+<main>
+<h1><span class="m">П</span>ризывы со скамьи</h1>
+<p class="sub">Как код Vexel пользуется операторами: разрешение имён, арность, ошибки, байткод.</p>
+
+<h2>1. Привязка</h2>
+<pre class="vx">@ VexGUI
+@ w : window # "Hi", 400, 300
+> show # w</pre>
+<p>Строка <code>@ Имя</code> (без двоеточия!) стоит сама по себе — только верхний уровень, выполняется по порядку. Компилятор читает установленный манифест и запоминает глаголы с арностями; VM грузит DLL в момент выполнения строки.</p>
+
+<h2>2. Порядок разрешения</h2>
+<p>Для <code>имя # args</code> компилятор смотрит по очереди:</p>
+<ol>
+<li>свои <code>&</code> инструменты (они всегда главные);</li>
+<li>глаголы привязанных операторов (первый привязанный побеждает при споре имён);</li>
+<li>встроенные <code>len/at/type/str</code>.</li>
+</ol>
+
+<h2>3. Ошибки — громкие, с координатами</h2>
+<pre class="err"><code>vexel: 1:1: unknown operator '@ Nope' — install it first (!vex_add Nope)
+vexel: 2:3: 'window' wants 3, summoned with 1
+vexel: Failed to load Operator: Demo
+Reason: cannot open Demo.dll (code 126)</code></pre>
+
+<h2>4. Результаты — обычные значения</h2>
+<p>Ответ оператора — первоклассное значение: в ячейку, в инструмент, в сравнение, под якорь:</p>
+<pre class="vx">@ VexGUI
+@ b : button # w, "OK", 20, 60
+> close # 999 ?? "no window"
+? clicked # b :
+  > "pressed"
+.</pre>
+<div class="note">Хендлы GUI — обычные числа. Мёртвые хендлы: <code>open</code> читает мёртвое окно как <code>0</code> (круги приземляются мягко), остальные глаголы поднимают <code>fail</code> — лечится через <code>??</code>.</div>
+
+<h2>5. Байткод</h2>
+<p><code>VX_ATTACH op</code> — положить (LoadLibrary + <code>vxop_open</code> + сверка личности). <code>VX_CALL_OP ref</code> — призвать (снять аргументы, вызвать C-функцию, положить ответ или <code>fail</code>). Дизассемблер (<code>!vex_check -v</code>) показывает таблицу операторов и ссылки.</p>
+
+<footer>Vexel 0.1 · <a href="index.html">Обзор</a> · дальше: <a href="vexgui.html">VexGUI</a>.</footer>
+</main>
+</div>
+</body>
+</html>

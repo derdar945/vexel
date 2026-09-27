@@ -1,0 +1,54 @@
+; VexGame dodge — arrows move the hero, rocks fall, score in slot 0.
+; Needs VexSYS too (rand): two operators on one bench, no conflict.
+@ VexGame
+@ VexSYS
+
+@ g : make # "Vex dodge", 400, 320
+@ bg : color # 10, 12, 26
+@ white : color # 230, 230, 240
+@ green : color # 90, 220, 120
+@ red : color # 240, 90, 90
+
+@ hero : spr # g, 180, 280, 40, 16, green
+@ rock : spr # g, 100, 0, 26, 26, red
+
+put # g, 0, 0
+
+& step :
+  cls # g, bg
+  ? key # g, 37 :
+    move # hero, 0 - 5, 0
+  .
+  ? key # g, 39 :
+    move # hero, 5, 0
+  .
+  @ hp : pos # hero
+  @ hx : at # hp, 0
+  ? hx < 0 :
+    place # hero, 0, 280
+  !
+    ? hx > 360 :
+      place # hero, 360, 280
+    .
+  .
+  move # rock, 0, 4
+  ? touch # hero, rock :
+    beep # 180, 120
+    put # g, 0, 0
+    place # rock, (rand # 374), 0
+  !
+    @ rp : pos # rock
+    ? (at # rp, 1) > 320 :
+      put # g, 0, (get # g, 0) + 1
+      place # rock, (rand # 374), 0
+    .
+  .
+  draw # g
+  text # g, "score: " + (str # (get # g, 0)), 10, 10, white
+  flip # g
+  = open # g
+.
+
+> show # g
+> run # g, "step"
+> "over: " + str # (get # g, 0)

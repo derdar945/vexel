@@ -1,0 +1,3 @@
+; VexExec catches merged child output; len counts bytes ("hi" + CRLF)
+@ VexExec
+> len # exec # "cmd /c echo hi", 5000

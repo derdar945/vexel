@@ -1,0 +1,24 @@
+; VexGUI events — click, change, close, size.
+@ VexGUI
+
+@ w : window # "Vexel — events", 440, 300
+@ status : text # w, "type below...", 20, 20
+@ field : input # w, 20, 60
+@ quit : button # w, "Close", 20, 120
+
+& step :
+  ? clicked # quit :
+    close # w
+  !
+    ? changed # field :
+      set_text # status, get_text # field
+    .
+  .
+  = open # w
+.
+
+> show # w
+> size # w
+> run # w, "step"
+
+> "closed"

@@ -1,0 +1,10 @@
+# VexSYS — MEGA system operator for Vexel (native, Win32, UTF-8)
+name = VexSYS
+version = 2.0.0
+description = MEGA battery for Vexel benches: os, time, path, env, process, random, strings, math
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexSYS.dll
+provides = version/0, os/0, arch/0, os_ver/0, cpu/0, mem/0, uptime/0, tick/0, user/0, hostname/0, cwd/0, chdir/1, mkdir/1, exe/0, pid/0, args/0, exit/1, time/0, time_ms/0, date/0, date_utc/0, sleep/1, env/1, has_env/1, set_env/2, unset_env/1, env_all/0, join/2, base/1, dir_name/1, ext/1, stem/1, abspath/1, is_abs/1, is_file/1, is_dir/1, size/1, mtime/1, which/1, path_sep/0, rand/1, rand_range/2, rand_bytes/1, choice/1, shuffle/1, uuid/0, upper/1, lower/1, trim/1, split/2, lines/1, str_join/2, starts/2, ends/2, contains/2, replace/3, abs/1, floor/1, ceil/1, sqrt/1, pow/2, min/2, max/2, clamp/3

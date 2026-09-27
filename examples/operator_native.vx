@@ -1,0 +1,5 @@
+; operator_native.vx — native summon without any window
+@ VexGUI
+> version #
+> type # version #
+> size # window # "probe", 200, 100 ?? "n/a"

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — операторы и менеджер</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a href="index.html">Обзор</a>
+  <a href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a href="language.html">Язык и метки</a>
+  <a href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a class="here" href="operators.html">Операторы и менеджер</a>
+  <a href="abi.html">Native ABI</a>
+  <a href="creating-operator.html">Свой оператор</a>
+  <a href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a href="tools.html">Shop tools</a>
+  <a href="vex3d.html">Vex3D</a>
+</nav>
+<main>
+<h1><span class="m">О</span>ператоры и менеджер</h1>
+<p class="sub">Core остаётся маленьким. Возможности — операторами: функциями, значениями, объектами, событиями, нативным API.</p>
+
+<h2>1. Идея</h2>
+<p>Оператор — официальное расширение языка, а не «библиотека сбоку». После установки его глаголы призываются той же решёткой <code>#</code>, что и свои инструменты. Никаких <code>import/include/using/require</code>: <code>@</code> и так значит «положить на скамью» — <code>@ VexGUI</code> кладёт оператор:</p>
+<pre class="vx">@ VexGUI
+> version #
+@ w : window # "Hi", 400, 300</pre>
+
+<h2>2. Формат operator.vxop</h2>
+<p>Плоские строки <code>key = value</code>, комментарии <code>#</code>/<code>;</code>, кавычки для значений с пробелами, неизвестные ключи игнорируются (задел на будущее):</p>
+<pre><code># VexGUI — official Vexel GUI operator (native, Win32)
+name = VexGUI
+version = 1.0.0
+description = Lightweight native windows, text, buttons and inputs
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexGUI.dll
+provides = version/0, window/3, show/1, open/1, close/1, run/2
+dependencies = VexNet >= 1.0</code></pre>
+<table>
+<tr><th>Ключ</th><th>Обязателен</th><th>Смысл</th></tr>
+<tr><td><code>name</code></td><td>да</td><td>имя: так его кладут (<code>@ VexGUI</code>) и ставят (<code>!vex_add VexGUI</code>); должно совпадать с каталогом и с DLL</td></tr>
+<tr><td><code>version</code></td><td>да</td><td>semver <code>major.minor.patch</code></td></tr>
+<tr><td><code>description</code></td><td>нет</td><td>показывается в <code>!vex_info</code> и поиске</td></tr>
+<tr><td><code>type</code></td><td>нет (default <code>native</code>)</td><td><code>native</code> — DLL с <code>vxop_open</code>; остальное пока не запускается</td></tr>
+<tr><td><code>vexel_version</code></td><td>нет</td><td>минимальная версия Core; несовпадение — <code>Operator ABI mismatch</code></td></tr>
+<tr><td><code>platform</code></td><td>нет (default <code>any</code>)</td><td><code>any</code> / <code>windows</code></td></tr>
+<tr><td><code>architecture</code> / <code>arch</code></td><td>нет (default <code>any</code>)</td><td><code>any</code> / <code>x64</code> / <code>x86</code></td></tr>
+<tr><td><code>entry</code></td><td>для native</td><td>имя DLL рядом с манифестом</td></tr>
+<tr><td><code>provides</code></td><td>нет</td><td><code>глагол/арность</code> через запятую — проверяется компилятором</td></tr>
+<tr><td><code>dependencies</code></td><td>нет</td><td><code>Имя [операция] [версия]</code> через запятую, <code>>=</code> по умолчанию</td></tr>
+</table>
+
+<h2>3. Хранилище</h2>
+<p>Установленное лежит в <code>&lt;каталог exe&gt;/operators/&lt;Имя&gt;/</code> (манифест + DLL). Переменная <code>VEXEL_OPS</code> переопределяет путь — так изолируются тесты. Источники для установки: <code>./operators/Имя</code> и <code>./Имя</code> относительно текущей папки.</p>
+
+<h2>4. Установка и зависимости</h2>
+<p><code>!vex_add VexGUI</code> делает по порядку:</p>
+<ol>
+<li>читает манифест источника, сверяет имя;</li>
+<li>проверяет Core (<code>Operator ABI mismatch: … wants vexel >= …</code>), платформу, архитектуру;</li>
+<li>ставит зависимости вглубь: каждая сверяется по semver (<code>>= == > &lt;= &lt; !=</code>), недостающая тянется из тех же источников;</li>
+<li>копирует манифест + DLL в хранилище, печатает протокол <code>[OK]</code>.</li>
+</ol>
+<p>Ошибки — словами из ТЗ:</p>
+<pre class="err"><code>Operator not found: Nope
+Missing dependency:
+VexNet >= 1.0
+Circular dependency: CycleA -> CycleB -> CycleA</code></pre>
+<div class="note">Недокат вытирается: каталог в хранилище удаляется при любой ошибке после создания. Установка поверх checkout-разработки, который И ЕСТЬ запись хранилища, источники не трогает (сравнение канонических путей).</div>
+<p><code>!vex_remove</code> отказывает, пока оператор кому-то нужен; <code>!vex_update</code> — переустановка из источников.</p>
+
+<h2>5. Загрузка в рантайме</h2>
+<p>Строка <code>@ Имя</code> компилируется в <code>VX_ATTACH</code>: LoadLibrary, поиск экспорта <code>vxop_open</code>, сверка ABI-номера и пары имя+версия с манифестом. Призывы — <code>VX_CALL_OP</code> (ссылка оператор/глагол/арность). Библиотеки выгружаются при смерти VM. Байткод с операторами — <code>.vxb</code> VXB2 (несёт таблицу операторов); старые VXB1 грузятся как раньше.</p>
+
+<h2>6. Что дальше</h2>
+<p>Дерево задумано как <code>VexGUI / VexNet / VexGame</code>. Реализован первый — <a href="vexgui.html">VexGUI</a>. Свой оператор — за 6 шагов: <a href="creating-operator.html">инструкция</a>.</p>
+
+
+<h2>7. Shipped operators</h2>
+<table>
+<tr><th>Operator</th><th>Verbs</th><th>Doc</th></tr>
+<tr><td>VexGUI</td><td>windows, text, button, input, editor, list + events</td><td><a href="vexgui.html">VexGUI</a></td></tr>
+<tr><td>VexFS</td><td>read, write, dir, exists, remove</td><td><a href="vexfs.html">VexFS</a></td></tr>
+<tr><td>VexExec</td><td>exec (run + catch output)</td><td><a href="vexec.html">VexExec</a></td></tr>
+<tr><td>VexNet</td><td>get, serve (plain HTTP)</td><td>docs/vexnet.md</td></tr>
+<tr><td>VexGame</td><td>game canvas, frame loop, keys</td><td>docs/vexgame.md</td></tr>
+<tr><td>Vex3D</td><td>scenes, objects, software 3D</td><td><a href="vex3d.html">Vex3D</a></td></tr>
+<tr><td>VexSYS</td><td>os/time/env/path/rand/strings/math battery</td><td>operators/VexSYS/README.md</td></tr>
+</table>
+<p>VexNet / VexGame exist only as names in the tree — roadmap, not stubs.</p>
+
+<footer>Vexel 0.1 · <a href="index.html">Обзор</a> · дальше: <a href="abi.html">Native ABI</a>.</footer>
+</main>
+</div>
+</body>
+</html>

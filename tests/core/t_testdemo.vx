@@ -1,0 +1,26 @@
+; math_test.vx — asserts as tools: wet PASS, dry FAIL
+@ x : 40 + 2
+
+& test_sum :
+  = x == 42
+.
+
+& fact n :
+  ? n <= 1 :
+    = 1
+  !
+    = n * fact # n - 1
+  .
+.
+
+& test_fact :
+  = fact # 5 == 120
+.
+
+& test_rescue :
+  = 1 / 0 ?? 7 == 7
+.
+
+& test_will_fail :
+  = 1 == 2
+.

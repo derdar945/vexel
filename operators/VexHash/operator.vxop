@@ -1,0 +1,10 @@
+# VexHash — tiny hashes for Vexel (native, no deps)
+name = VexHash
+version = 1.0.0
+description = CRC-32 and FNV-1a for text and files: hash_crc, hash_fnv, hash_file
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexHash.dll
+provides = hash_crc/1, hash_fnv/1, hash_file/1

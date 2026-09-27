@@ -1,0 +1,321 @@
+; lex.vx — stage 1 of self-hosting: a Vexel lexer written in Vexel.
+; Reads lex_input.vx, spills one token per line: KIND lexeme.
+; KINDs mirror the C lexer: AT AMP QMARK QQ BANG DOT COLON STAR GT
+; EQ HASH PLUS MINUS SLASH PERCENT LT GTE LTE EQEQ NEQ LPAREN RPAREN
+; LBRACKET RBRACKET COMMA NUM STR NAME NL.
+; Scanners are tools (only tools can land early with =); the bench
+; threads positions through them. Rounds without work just spin.
+@ VexFS
+
+& is_digit ch :
+  @ ds : ["0" "1" "2" "3" "4" "5" "6" "7" "8" "9"]
+  * len # ds :
+    ? (at # ds, it) == ch :
+      = 1
+    .
+  .
+  = 0
+.
+
+& is_name_start ch :
+  ? ch == "_" :
+    = 1
+  .
+  @ lo : "abcdefghijklmnopqrstuvwxyz"
+  @ hi : "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  * len # lo :
+    ? (at # lo, it) == ch :
+      = 1
+    !
+      ? (at # hi, it) == ch :
+        = 1
+      .
+    .
+  .
+  = 0
+.
+
+& is_name_char ch :
+  ? is_digit # ch :
+    = 1
+  !
+    = is_name_start # ch
+  .
+.
+
+@ src : read # "lex_input.vx" ?? ""
+@ n : len # src
+@ i : 0
+
+& peek :
+  ? i + 1 < n :
+    = at # src, i + 1
+  !
+    = ""
+  .
+.
+
+& skip_comment i :
+  @ stop : 0
+  * n - i :
+    ? not stop :
+      ? (at # src, i) == "\n" :
+        @ stop : 1
+      !
+        @ i : i + 1
+      .
+    .
+  .
+  = i
+.
+
+& scan_str i :
+  @ s : ""
+  @ i : i + 1
+  @ stop : 0
+  * n - i :
+    ? not stop :
+      @ ch : at # src, i
+      ? ch == "\"" :
+        @ i : i + 1
+        @ stop : 1
+      !
+        ? ch == "\\" :
+          @ s : s + at # src, i + 1
+          @ i : i + 2
+        !
+          @ s : s + ch
+          @ i : i + 1
+        .
+      .
+    .
+  .
+  = [i, s]
+.
+
+& scan_num i s :
+  @ stop : 0
+  * n - i :
+    ? not stop :
+      @ ch : at # src, i
+      ? is_digit # ch :
+        @ s : s + ch
+        @ i : i + 1
+      !
+        ? ch == "." :
+          ? is_digit # at # src, i + 1 :
+            @ s : s + ch
+            @ i : i + 1
+          !
+            @ stop : 1
+          .
+        !
+          @ stop : 1
+        .
+      .
+    .
+  .
+  = [i, s]
+.
+
+& scan_name i s :
+  @ stop : 0
+  * n - i :
+    ? not stop :
+      @ ch : at # src, i
+      ? is_name_char # ch :
+        @ s : s + ch
+        @ i : i + 1
+      !
+        @ stop : 1
+      .
+    .
+  .
+  = [i, s]
+.
+
+* n :
+  ? i < n :
+    @ ch : at # src, i
+    ? ch == " " :
+      @ i : i + 1
+    !
+      ? ch == "\t" :
+        @ i : i + 1
+      !
+        ? ch == "\r" :
+          @ i : i + 1
+        !
+          ? ch == "\n" :
+            ? i == 0 :
+              @ i : i + 1
+            !
+              ? (at # src, i - 1) == "\n" :
+                @ i : i + 1
+              !
+                > "NL"
+                @ i : i + 1
+              .
+            .
+          !
+            ? ch == ";" :
+              @ i : skip_comment # i
+            !
+              ? ch == "\"" :
+                @ r : scan_str # i
+                @ i : at # r, 0
+                > "STR " + at # r, 1
+              !
+                ? is_digit # ch :
+                  @ r : scan_num # i, ""
+                  @ i : at # r, 0
+                  > "NUM " + at # r, 1
+                !
+                  ? ch == "." :
+                    ? is_digit # peek # :
+                      @ r : scan_num # i + 1, "."
+                      @ i : at # r, 0
+                      > "NUM " + at # r, 1
+                    !
+                      > "DOT"
+                      @ i : i + 1
+                    .
+                  !
+                    ? is_name_start # ch :
+                      @ r : scan_name # i, ""
+                      @ i : at # r, 0
+                      > "NAME " + at # r, 1
+                    !
+                      ? ch == "?" :
+                        ? peek # == "?" :
+                          > "QQ"
+                          @ i : i + 2
+                        !
+                          > "QMARK"
+                          @ i : i + 1
+                        .
+                      !
+                        ? ch == "!" :
+                          ? peek # == "=" :
+                            > "NEQ"
+                            @ i : i + 2
+                          !
+                            > "BANG"
+                            @ i : i + 1
+                          .
+                        !
+                          ? ch == "=" :
+                            ? peek # == "=" :
+                              > "EQEQ"
+                              @ i : i + 2
+                            !
+                              > "EQ"
+                              @ i : i + 1
+                            .
+                          !
+                            ? ch == ">" :
+                              ? peek # == "=" :
+                                > "GTE"
+                                @ i : i + 2
+                              !
+                                > "GT"
+                                @ i : i + 1
+                              .
+                            !
+                              ? ch == "<" :
+                                ? peek # == "=" :
+                                  > "LTE"
+                                  @ i : i + 2
+                                !
+                                  > "LT"
+                                  @ i : i + 1
+                                .
+                              !
+                                ? ch == "@" :
+                                  > "AT"
+                                  @ i : i + 1
+                                !
+                                  ? ch == "&" :
+                                    > "AMP"
+                                    @ i : i + 1
+                                  !
+                                    ? ch == ":" :
+                                      > "COLON"
+                                      @ i : i + 1
+                                    !
+                                      ? ch == "*" :
+                                        > "STAR"
+                                        @ i : i + 1
+                                      !
+                                        ? ch == "#" :
+                                          > "HASH"
+                                          @ i : i + 1
+                                        !
+                                          ? ch == "+" :
+                                            > "PLUS"
+                                            @ i : i + 1
+                                          !
+                                            ? ch == "-" :
+                                              > "MINUS"
+                                              @ i : i + 1
+                                            !
+                                              ? ch == "/" :
+                                                > "SLASH"
+                                                @ i : i + 1
+                                              !
+                                                ? ch == "%" :
+                                                  > "PERCENT"
+                                                  @ i : i + 1
+                                                !
+                                                  ? ch == "(" :
+                                                    > "LPAREN"
+                                                    @ i : i + 1
+                                                  !
+                                                    ? ch == ")" :
+                                                      > "RPAREN"
+                                                      @ i : i + 1
+                                                    !
+                                                      ? ch == "[" :
+                                                        > "LBRACKET"
+                                                        @ i : i + 1
+                                                      !
+                                                        ? ch == "]" :
+                                                          > "RBRACKET"
+                                                          @ i : i + 1
+                                                        !
+                                                          ? ch == "," :
+                                                            > "COMMA"
+                                                            @ i : i + 1
+                                                          !
+                                                            > "BAD"
+                                                            @ i : i + 1
+                                                          .
+                                                        .
+                                                      .
+                                                    .
+                                                  .
+                                                .
+                                              .
+                                            .
+                                          .
+                                        .
+                                      .
+                                    .
+                                  .
+                                .
+                              .
+                            .
+                          .
+                        .
+                      .
+                    .
+                  .
+                .
+              .
+            .
+          .
+        .
+      .
+    .
+  .
+.

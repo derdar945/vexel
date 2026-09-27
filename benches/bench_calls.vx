@@ -1,0 +1,14 @@
+; bench_calls.vx — summon pressure: 50k tiny summons
+@ VexSYS
+
+& add2 a b :
+  = a + b
+.
+
+@ t : time_ms #
+@ acc : 0
+* 50000 :
+  @ acc : add2 # acc, 1
+.
+> acc
+> (time_ms #) - t

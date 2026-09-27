@@ -1,0 +1,39 @@
+# build
+build/
+cmake-build-*/
+*.vxb
+vexel.exe
+
+# objects / libs (built by CMake; releases carry binaries)
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.pdb
+*.ilk
+*.exp
+
+# test / release leftovers
+TestProject/
+Demo/
+*.tmp
+
+# VS Code extension workspace bits (kept out of the language repo)
+vexel-vscode/node_modules/
+vexel-vscode/*.vsix
+vexel-vscode/out/
+
+# editors
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# compiled test drivers
+tools/*.exe
+

@@ -1,0 +1,10 @@
+# VexJSON — tiny JSON for Vexel (native, no deps)
+name = VexJSON
+version = 1.0.0
+description = Validate, parse and query JSON: objects are vecs of pairs
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexJSON.dll
+provides = json_valid/1, json_parse/1, json_get/2, json_len/1

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — Native ABI</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a href="index.html">Обзор</a>
+  <a href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a href="language.html">Язык и метки</a>
+  <a href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a href="operators.html">Операторы и менеджер</a>
+  <a class="here" href="abi.html">Native ABI</a>
+  <a href="creating-operator.html">Свой оператор</a>
+  <a href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a href="tools.html">Shop tools</a>
+  <a href="vex3d.html">Vex3D</a>
+</nav>
+<main>
+<h1><span class="m">N</span>ative ABI v1</h1>
+<p class="sub">Контракт между Core и DLL: <code>include/operator.h</code>, стабильный, только C17.</p>
+
+<h2>1. Точка входа</h2>
+<p>DLL экспортирует ровно один символ:</p>
+<pre><code>const VxOpInfo *vxop_open(const VxOpApi *api);</code></pre>
+<pre><code>typedef struct VxOpFuncInfo { const char *name; int arity; VxOpFunc f; } ...;
+typedef struct VxOpInfo {
+    int abi_version;      /* VXOP_ABI_VERSION */
+    const char *name;     /* == manifest */
+    const char *version;  /* == manifest */
+    int nfuncs;
+    const VxOpFuncInfo *funcs;
+} VxOpInfo;</code></pre>
+<p>Загрузчик проверяет: экспорт есть, <code>abi_version</code> совпал, имя+версия совпали с манифестом. Иначе — громкий отказ (<code>Operator ABI mismatch</code>, <code>Failed to load Operator</code>).</p>
+
+<h2>2. Владение — весь контракт в пяти строках</h2>
+<ul>
+<li>Аргументы принадлежат Core. Не освобождать их.</li>
+<li><code>*out</code> — всегда СВЕЖЕЕ: конструкторы api или <code>clone</code>. Никогда не отдавать сам указатель args (он занимает память стека VM — это роняло кучу, поймано тестом).</li>
+<li><code>retain</code> — только значениям, переживающим вызов; освободить до выгрузки.</li>
+<li><code>func</code> возвращает 0; ненулевое поднимает <code>fail</code> (лечится через <code>??</code>).</li>
+<li>Значения трогать только через api — напрямую память VM недоступна в принципе (тип непрозрачный).</li>
+</ul>
+
+<h2>3. Таблица api</h2>
+<table>
+<tr><th>Поле</th><th>Смысл</th></tr>
+<tr><td><code>make_num / make_text / make_fail / make_vec</code></td><td>свежие значения (право владения уходит Core)</td></tr>
+<tr><td><code>vec_push(vec, item)</code></td><td>0 — ок; при успехе забирает владение item</td></tr>
+<tr><td><code>retain / release / clone</code></td><td>счётчик ссылок; clone — свежая копия с разделяемой начинкой</td></tr>
+<tr><td><code>face</code></td><td><code>VXF_FAIL / VXF_NUM / VXF_TEXT / VXF_VEC</code></td></tr>
+<tr><td><code>as_num / as_text</code></td><td>заимствованные байты, живы пока живо значение</td></tr>
+<tr><td><code>vec_len / vec_get</code></td><td><code>vec_get</code> отдаёт удерживаемую копию (освободить!)</td></tr>
+<tr><td><code>is_true</code></td><td>тест влажности</td></tr>
+<tr><td><code>summon(tool, args, argc, &amp;out)</code></td><td>призвать инструмент Vexel по имени; забирает args; валидно только внутри вызова оператора</td></tr>
+</table>
+
+<h2>4. Обратный призыв (reentrancy)</h2>
+<p>Оператор может дёрнуть Vexel-код посреди своего вызова — так <code>run</code> в VexGUI каждый раунд призывает <code>step</code>. VM выполняет вложенный вызов на тех же стеках с явной глубиной (<code>run_until</code>), предел вложенности — 256 кадров. Ошибка шага печатается в stderr с именем инструмента, вызов возвращает ненулевое.</p>
+
+<h2>5. Минимальный оператор целиком</h2>
+<pre><code>#include "operator.h"
+
+static int op_ping(const VxOpApi *api, VxOpVal **args, int argc,
+                   VxOpVal **out) {
+    (void)argc;
+    *out = api->clone(args[0]);
+    return *out ? 0 : 1;
+}
+
+static const VxOpFuncInfo funcs[] = { { "ping", 1, op_ping } };
+
+#ifdef _WIN32
+#define VXOP_EXPORT __declspec(dllexport)
+#else
+#define VXOP_EXPORT
+#endif
+
+VXOP_EXPORT const VxOpInfo *vxop_open(const VxOpApi *api) {
+    static VxOpInfo info;
+    (void)api;
+    info.abi_version = VXOP_ABI_VERSION;
+    info.name = "MyOp";
+    info.version = "0.1.0";
+    info.nfuncs = 1;
+    info.funcs = funcs;
+    return &amp;info;
+}</code></pre>
+
+<footer>Vexel 0.1 · <a href="index.html">Обзор</a> · дальше: <a href="creating-operator.html">свой оператор</a>.</footer>
+</main>
+</div>
+</body>
+</html>

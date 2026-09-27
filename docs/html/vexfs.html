@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — VexFS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a href="index.html">Обзор</a>
+  <a href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a href="language.html">Язык и метки</a>
+  <a href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a href="operators.html">Операторы и менеджер</a>
+  <a href="abi.html">Native ABI</a>
+  <a href="creating-operator.html">Свой оператор</a>
+  <a href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a href="tools.html">Shop tools</a>
+  <a href="vex3d.html">Vex3D</a>
+  <a class="here" href="vexfs.html">VexFS</a>
+</nav>
+<main>
+<h1><span class="m">V</span>exFS 1.0.0 — файлы</h1>
+<p class="sub">Нативный оператор, Win32, пути в UTF-8. Пять глаголов, без сюрпризов.</p>
+
+<pre class="vx">@ VexFS
+> write # "note.txt", "line1\nline2"
+> read # "note.txt"
+> exists # "note.txt"
+> dir # "."
+> remove # "note.txt"</pre>
+
+<h2>Глаголы</h2>
+<table>
+<tr><th>Глагол</th><th>Смысл</th></tr>
+<tr><td><code>read # path</code></td><td>весь файл текстом. Нет файла — <code>fail</code>. UTF-8 BOM срезается, лимит 64 МБ</td></tr>
+<tr><td><code>write # path, text</code></td><td>заменить файл целиком → <code>1</code>, иначе <code>fail</code></td></tr>
+<tr><td><code>dir # path</code></td><td>вектор имён (без <code>.</code>/<code>..</code>), плохой путь — <code>fail</code></td></tr>
+<tr><td><code>exists # path</code></td><td><code>1</code> / <code>0</code> (никогда не <code>fail</code>)</td></tr>
+<tr><td><code>remove # path</code></td><td><code>1</code>, не вышло — <code>fail</code></td></tr>
+</table>
+<p>Относительные пути — от cwd скамьи. Кириллица работает.</p>
+
+<h2>Ошибки — значениями, как обычно</h2>
+<pre class="vx">> read # "nope.txt" ?? "empty"
+> remove # "nope.txt" ?? "already gone"</pre>
+
+<h2>Откуда ставится</h2>
+<pre><code>!vex_add VexFS
+!vex_info VexFS</code></pre>
+<p>Исходник: <code>operators/VexFS/</code> (манифест + <code>src/vfs.c</code> + README).</p>
+
+<footer>Vexel 0.1 · <a href="index.html">Обзор</a> · рядом: <a href="vexec.html">VexExec</a>.</footer>
+</main>
+</div>
+</body>
+</html>

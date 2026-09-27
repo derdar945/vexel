@@ -1,0 +1,45 @@
+name: vscode-contract
+
+# The extension itself lives in the sibling vexel-vscode repo.
+# This workflow guards the contract it relies on: real CLI commands,
+# error format, and vexel.json scaffolding.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  contract:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MinGW
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-make
+
+      - name: Build
+        shell: msys2 {0}
+        run: |
+          cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+
+      - name: CLI contract for the extension
+        shell: cmd
+        run: |
+          copy /y build\vexel.exe vexel.exe
+          vexel.exe !vex_help | findstr /c:"!vex_run" || exit 1
+          vexel.exe !vex_help | findstr /c:"!vex_check" || exit 1
+          vexel.exe !vex_help | findstr /c:"!vex_build" || exit 1
+          vexel.exe !vex_help | findstr /c:"!vex_repl" || exit 1
+          vexel.exe !vex_help | findstr /c:"!vex_add" || exit 1
+          vexel.exe !vex_new ContractProj >nul || exit 1
+          if not exist ContractProj\vexel.json exit 1
+          if not exist ContractProj\main.vx exit 1
+          rmdir /s /q ContractProj
+          echo contract OK

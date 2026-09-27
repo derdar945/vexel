@@ -1,0 +1,10 @@
+# VexGL — real 3D operator for Vexel (native, Win32+WGL, no frameworks)
+name = VexGL
+version = 1.0.0
+description = True 3D mini-engine for Vexel: perspective camera, meshes, shaded cubes, 60fps loop
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexGL.dll
+provides = version/0, make/3, show/1, open/1, close/1, run/2, frame/2, size/1, dt/1, fps/1, tick/1, put/3, get/2, key/2, pressed/2, cls/4, cam/7, begin/2, col/4, v/4, end/1, cube/9, flip/1

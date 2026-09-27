@@ -1,0 +1,5 @@
+@ c : [1 2 3]
+> len # c
+> at # c, 0
+> at # c, 2
+> type # c

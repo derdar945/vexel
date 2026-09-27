@@ -1,0 +1,10 @@
+# VexFS — file operator for Vexel (native, Win32, UTF-8 paths)
+name = VexFS
+version = 1.0.0
+description = Read, write, list and remove files for Vexel benches
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexFS.dll
+provides = read/1, write/2, dir/1, exists/1, remove/1

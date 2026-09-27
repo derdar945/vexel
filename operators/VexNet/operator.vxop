@@ -1,0 +1,10 @@
+# VexNet — network operator for Vexel (native, Win32 Winsock, HTTP)
+name = VexNet
+version = 1.0.0
+description = Plain HTTP client and step-driven server for Vexel benches
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexNet.dll
+provides = get/1, serve/2

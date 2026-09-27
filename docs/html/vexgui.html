@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — VexGUI</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a href="index.html">Обзор</a>
+  <a href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a href="language.html">Язык и метки</a>
+  <a href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a href="operators.html">Операторы и менеджер</a>
+  <a href="abi.html">Native ABI</a>
+  <a href="creating-operator.html">Свой оператор</a>
+  <a class="here" href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a href="tools.html">Shop tools</a>
+  <a href="vex3d.html">Vex3D</a>
+</nav>
+<main>
+<h1><span class="m">V</span>exGUI 1.0.0 — окна по-векселовски</h1>
+<p class="sub">Первый большой оператор. Только Win32 (<code>user32/gdi32</code>), без Qt/Electron/SDL/браузеров. DLL ~60 КБ.</p>
+
+<h2>1. Установка и первая скамья</h2>
+<pre><code>vexel.exe !vex_operator_build operators/VexGUI   (build.bat уже собрал)
+vexel.exe !vex_add VexGUI
+vexel.exe !vex_run examples/gui_hello.vx</code></pre>
+<pre class="vx">; gui_hello.vx — окно, заголовок, текст, кнопка, ввод, клик, закрытие
+@ VexGUI
+
+@ w : window # "Vexel — hello", 420, 260
+@ hello : text # w, "press the mark", 20, 20
+@ name : input # w, 20, 60
+@ go : button # w, "Say hello", 20, 110
+
+& step :
+  ? clicked # go :
+    @ who : get_text # name ?? "tide"
+    set_text # hello, "Hello, " + who + "!"
+  .
+  = open # w
+.
+
+> show # w
+> run # w, "step"
+
+> "bye"</pre>
+
+<h2>2. Философия событий: без слушателей</h2>
+<p>Оператор владеет циклом сообщений, Vexel владеет шагом. <code>run # w, "step"</code> качает сообщения и каждый раунд призывает инструмент <code>step</code>: ответ мокрый — крутим дальше, сухой — приземлились. Закрытие окна читается как сухость, поэтому круг приземляется сам — отдельный обработчик закрытия не нужен (хотя <code>close # w</code> разрушает по требованию).</p>
+<div class="note">Почему не обычный цикл <code>*</code>? Круг Vexel — счётный, «крутить, пока открыто» им не выразить. Бег <code>run</code> — честное архитектурное дополнение, а не костыль.</div>
+
+<h2>3. Все глаголы</h2>
+<table>
+<tr><th>Глагол</th><th>Смысл</th></tr>
+<tr><td><code>version #</code></td><td><code>"1.0.0"</code> — окна не нужно</td></tr>
+<tr><td><code>window # t, w, h</code></td><td>хендл; скрыто до <code>show</code></td></tr>
+<tr><td><code>show # w</code></td><td><code>1</code> — показать</td></tr>
+<tr><td><code>open # w</code></td><td><code>1</code> живо / <code>0</code> закрыто (качает сообщения)</td></tr>
+<tr><td><code>close # w</code></td><td><code>1</code> — разрушить сейчас</td></tr>
+<tr><td><code>run # w, "step"</code></td><td><code>1</code> — цикл до сухости шага или смерти окна</td></tr>
+<tr><td><code>text # w, s, x, y</code></td><td>подпись (STATIC)</td></tr>
+<tr><td><code>button # w, s, x, y</code></td><td>кнопка</td></tr>
+<tr><td><code>input # w, x, y</code></td><td>строка ввода (EDIT)</td></tr>
+<tr><td><code>editor # w, x, y, ww, hh</code></td><td>multiline editor with scroll</td></tr>
+<tr><td><code>list # w, x, y, ww, hh</code></td><td>listbox</td></tr>
+<tr><td><code>list_set # h, vec</code></td><td>refill the listbox from a vec of texts</td></tr>
+<tr><td><code>selected # h</code></td><td>chosen row text, fail if none</td></tr>
+<tr><td><code>set_text # h, s</code></td><td><code>1</code></td></tr>
+<tr><td><code>get_text # h</code></td><td>текст</td></tr>
+<tr><td><code>clicked # h</code></td><td><code>1</code> один раз за нажатие (кнопка)</td></tr>
+<tr><td><code>changed # h</code></td><td><code>1</code> один раз за правку (ввод)</td></tr>
+<tr><td><code>size # w</code></td><td><code>[w h]</code> — клиентский вектор</td></tr>
+</table>
+<p>Хендлы — обычные числа. Кривые хендлы поднимают <code>fail</code> (кроме <code>open</code> — он читает мёртвое окно как <code>0</code>):</p>
+<pre class="vx">> close # 999 ?? "no window"</pre>
+<pre class="out"><code>no window</code></pre>
+
+<h2>4. События: click, change, close, resize</h2>
+<pre class="vx">; gui_events.vx — все четыре
+& step :
+  ? clicked # quit :
+    close # w
+  !
+    ? changed # field :
+      set_text # status, get_text # field
+    .
+  .
+  = open # w
+.</pre>
+<p>Resize виден через <code>size # w</code> (опрашивай в <code>step</code> и сравнивай с прошлым). Панели, Canvas, List, Menu, Dialog, темы и анимации — roadmap: их просто пока нет, заглушек нет.</p>
+
+<h2>5. Проверено живым окном</h2>
+<p>Тест <code>tests/operators/gui_window.ps1</code> находит настоящее окно по заголовку, шлёт <code>BM_CLICK</code> настоящей кнопке, читает STATIC (<code>Hello, !</code>), закрывает и ждёт <code>bye</code> с кодом 0. Никаких моков.</p>
+
+<footer>Vexel 0.1 · <a href="index.html">Обзор</a> · исходники: <code>operators/VexGUI/</code>.</footer>
+</main>
+</div>
+</body>
+</html>

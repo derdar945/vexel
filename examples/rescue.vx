@@ -1,0 +1,9 @@
+; rescue.vx — fail и ?? вместо try/catch
+& risky d :
+  = 100 / d
+.
+> risky # 0 ?? 0 - 1
+> risky # 4
+@ c : [1 2]
+> at # c, 9 ?? "empty"
+> type # 10 / 0

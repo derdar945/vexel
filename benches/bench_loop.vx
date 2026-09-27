@@ -1,0 +1,10 @@
+; bench_loop.vx — tight circle: 200k rounds of arithmetic
+@ VexSYS
+
+@ t : time_ms #
+@ acc : 0
+* 200000 :
+  @ acc : acc + it * 3 - 1
+.
+> acc
+> (time_ms #) - t

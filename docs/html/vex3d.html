@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — Vex3D</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a href="index.html">Обзор</a>
+  <a href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a href="language.html">Язык и метки</a>
+  <a href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a href="operators.html">Операторы и менеджер</a>
+  <a href="abi.html">Native ABI</a>
+  <a href="creating-operator.html">Свой оператор</a>
+  <a href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a class="here" href="vex3d.html">Vex3D</a>
+  <a href="tools.html">Shop tools</a>
+</nav>
+<main>
+<h1><span class="m">V</span>ex3D 1.0.0 — tiny 3D</h1>
+<p class="sub">Сцены, объекты, софтверный растеризатор. Без движков снаружи: Win32 + GDI DIB + математика руками.</p>
+
+<pre class="vx">@ Vex3D
+@ s : scene # 320, 200, "cube"
+@ m : cube #
+@ o : spawn # s, m, 0, 0, 5
+color # o, 16744448
+
+& step :
+  turn # o, (tick # s), ((tick # s) * 2), 0
+  ? tick # s > 300 :
+    = fail
+  !
+    = open # s
+  .
+.
+
+> frame # s, "step"</pre>
+
+<h2>Как Юнити, честно спроецировано</h2>
+<table>
+<tr><th>Юнити</th><th>Vex3D</th></tr>
+<tr><td>Scene</td><td><code>scene # w, h, title</code></td></tr>
+<tr><td>Instantiate + Mesh</td><td><code>cube #</code> / <code>mesh # flatvec</code> + <code>spawn # s, m, x, y, z</code></td></tr>
+<tr><td>Transform</td><td><code>move / turn / scale / color</code></td></tr>
+<tr><td>Update loop</td><td><code>frame # s, "step"</code> — мокро дальше, сухо стоп</td></tr>
+<tr><td>Input polling</td><td><code>key # s, code</code></td></tr>
+</table>
+<p>Нет префабов, физики и материалов — это roadmap, не заявление. Углы — чистые функции <code>tick</code> (инструменты не пишут глобалы, так что тик и есть память).</p>
+
+<h2>Конвейер</h2>
+<p>Эйлер X→Y→Z (градусы), масштаб, перенос; камера смотрит +Z (поворота камеры нет); перспектива; плоский шейдинг по нормали; z-буфер; барицентрическая заливка в DIB. <code>draw # s</code> — один кадр без цикла (так тесты читают пиксели: <code>getpx</code>).</p>
+
+<h2>Осторожно: жадные призывы</h2>
+<p>Вложенные призывы в списках через запятую — в скобки (<code>turn # o, (tick # s), ...</code>), иначе внутренний съест хвосты. Подробно: <a href="language.html">язык</a>.</p>
+
+<footer>Vexel 0.1 · <a href="index.html">Обзор</a> · пример: <code>examples/game3d.vx</code>.</footer>
+</main>
+</div>
+</body>
+</html>

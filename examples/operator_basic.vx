@@ -1,0 +1,5 @@
+; operator_basic.vx — attach operator, no window needed
+@ VexGUI
+> version #
+> type # version #
+> close # 999 ?? "no window"

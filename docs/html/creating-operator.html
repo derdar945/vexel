@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — свой оператор</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a href="index.html">Обзор</a>
+  <a href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a href="language.html">Язык и метки</a>
+  <a href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a href="operators.html">Операторы и менеджер</a>
+  <a href="abi.html">Native ABI</a>
+  <a class="here" href="creating-operator.html">Свой оператор</a>
+  <a href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a href="tools.html">Shop tools</a>
+  <a href="vex3d.html">Vex3D</a>
+</nav>
+<main>
+<h1><span class="m">С</span>вой оператор за 6 шагов</h1>
+<p class="sub">Создание → API → код → сборка → установка → использование.</p>
+
+<h2>1. Создание</h2>
+<pre><code>!vex_operator_new MyOp</code></pre>
+<p>Получаешь <code>MyOp/operator.vxop</code>, <code>src/MyOp.c</code> (рабочий глагол <code>ping/1</code>), <code>examples/hello.vx</code>, README. Имя — латиница/цифры/подчёркивание.</p>
+
+<h2>2. API сначала</h2>
+<p>Придумай глаголы и арности, запиши в манифест — компилятор будет проверять каждый призыв:</p>
+<pre><code>provides = ping/1, shout/1</code></pre>
+
+<h2>3. Код</h2>
+<pre><code>#include "operator.h"
+
+static int op_shout(const VxOpApi *api, VxOpVal **args, int argc,
+                    VxOpVal **out) {
+    const char *s = NULL;
+    size_t n = 0;
+    if (!api->as_text(args[0], &amp;s, &amp;n)) return 1; /* -&gt; fail */
+    /* ... собрать LOUD ... */
+    *out = api->make_text(LOUD, LOUDN);
+    return *out ? 0 : 1;
+}
+
+static const VxOpFuncInfo funcs[] = {
+    { "ping", 1, op_ping },
+    { "shout", 1, op_shout },
+};
+
+VXOP_EXPORT const VxOpInfo *vxop_open(const VxOpApi *api) {
+    static VxOpInfo info;
+    (void)api;
+    info.abi_version = VXOP_ABI_VERSION;
+    info.name = "MyOp";          /* == manifest */
+    info.version = "0.1.0";      /* == manifest */
+    info.nfuncs = 2;
+    info.funcs = funcs;
+    return &amp;info;
+}</code></pre>
+<div class="warn">Три запрета: не трогать значения мимо api; не отдавать указатель args (только свежее через конструкторы/<code>clone</code>); не забывать <code>VXOP_EXPORT</code>, иначе загрузчик не найдёт <code>vxop_open</code>.</div>
+<p>Нужен Vexel, решающий по событию (как шаг GUI)? <code>api->summon("step", NULL, 0, &amp;r)</code> + <code>api->is_true(r)</code> — подробности в <a href="abi.html">ABI</a>.</p>
+
+<h2>4. Сборка</h2>
+<pre><code>!vex_operator_build MyOp</code></pre>
+<p>Собирает <code>src/*.c</code> в <code>MyOp/MyOp.dll</code> через gcc и Core-<code>include/</code> (ищется вверх от каталога). Нужен gcc на PATH.</p>
+
+<h2>5. Установка</h2>
+<pre><code>!vex_add MyOp</code></pre>
+<p>Проверяются манифест, версия Core, платформа, наличие DLL, дерево зависимостей. Типичные отказы — <code>Missing dependency:</code>, <code>Operator ABI mismatch</code>, <code>Native module not built</code>.</p>
+
+<h2>6. Использование</h2>
+<pre class="vx">@ MyOp
+> shout # "tide"
+> shout # 42 ?? "loud words only"</pre>
+
+<footer>Vexel 0.1 · <a href="index.html">Обзор</a> · пример живьём: <a href="vexgui.html">VexGUI</a>.</footer>
+</main>
+</div>
+</body>
+</html>

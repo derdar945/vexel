@@ -1,0 +1,10 @@
+# VexExec — run programs for Vexel (native, Win32)
+name = VexExec
+version = 1.0.0
+description = Run shell commands and catch their output for Vexel benches
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexExec.dll
+provides = exec/2

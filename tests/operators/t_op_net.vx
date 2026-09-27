@@ -1,0 +1,4 @@
+; VexNet fail paths (no server needed): bad scheme, refused port
+@ VexNet
+> get # "notaurl" ?? "bad-url"
+> get # "http://127.0.0.1:19312/" ?? "refused"

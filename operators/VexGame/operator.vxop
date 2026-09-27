@@ -1,0 +1,10 @@
+# VexGame — tiny game operator for Vexel (native, Win32 GDI, no frameworks)
+name = VexGame
+version = 1.0.0
+description = 2D mini-engine for Vexel: canvas, sprites, input, sound, 60fps loop
+type = native
+vexel_version = 0.1.0
+platform = windows
+architecture = any
+entry = VexGame.dll
+provides = version/0, make/3, game/3, show/1, open/1, close/1, run/2, frame/2, size/1, dt/1, fps/1, tick/1, cls/2, fill/2, flip/1, rect/6, box/6, circle/5, ring/5, line/6, dot/4, px/4, getpx/3, text/5, color/3, spr/6, move/3, place/3, pos/1, spr_box/1, paint/2, kill/1, touch/2, draw/1, put/3, get/2, key/2, pressed/2, mouse/1, mdown/1, mclick/1, hit/2, dist/4, beep/2

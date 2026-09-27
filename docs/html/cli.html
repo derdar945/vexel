@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vexel — CLI !vex_*</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="logo"><span>V</span>EXEL</div>
+  <div class="ver">0.1 + operators · docs</div>
+  <div class="grp">Старт</div>
+  <a href="index.html">Обзор</a>
+  <a class="here" href="cli.html">CLI · !vex_*</a>
+  <div class="grp">Язык</div>
+  <a href="language.html">Язык и метки</a>
+  <a href="operator_api.html">Призывы операторов</a>
+  <div class="grp">Экосистема</div>
+  <a href="operators.html">Операторы и менеджер</a>
+  <a href="abi.html">Native ABI</a>
+  <a href="creating-operator.html">Свой оператор</a>
+  <a href="vexgui.html">VexGUI</a>
+  <a href="vexfs.html">VexFS</a>
+  <a href="vexec.html">VexExec</a>
+  <a href="tools.html">Shop tools</a>
+  <a href="vex3d.html">Vex3D</a>
+</nav>
+<main>
+<h1><span class="m">C</span>LI — всё через !vex_</h1>
+<p class="sub">Фирменный префикс. В обычном Windows CMD восклицание — буквальный символ: <code>vexel.exe !vex_run main.vx</code> работает как есть.</p>
+
+<h2>1. Скамья: run / check / build / repl</h2>
+<table>
+<tr><th>Команда</th><th>Смысл</th></tr>
+<tr><td><code>!vex_run &lt;file.vx|file.vxb&gt;</code></td><td>выполнить</td></tr>
+<tr><td><code>!vex_check &lt;file.vx&gt; [-v]</code></td><td>только lex/parse/compile; <code>-v</code> — дизассемблер</td></tr>
+<tr><td><code>!vex_build &lt;file.vx&gt; [out.vxb]</code></td><td>байткод VXB2 (старые VXB1 грузятся)</td></tr>
+<tr><td><code>!vex_repl</code></td><td>интерактив (сессия переигрывается; <code>bye</code> — выход)</td></tr>
+<tr><td><code>!vex_version</code> / <code>!vex_help</code></td><td>версия / помощь</td></tr>
+</table>
+
+<h2>2. Проекты и операторы</h2>
+<table>
+<tr><th>Команда</th><th>Смысл</th></tr>
+<tr><td><code>!vex_new &lt;Project&gt;</code></td><td>каркас с <code>main.vx</code></td></tr>
+<tr><td><code>!vex_add &lt;Operator&gt;</code></td><td>установить по имени (+ зависимости)</td></tr>
+<tr><td><code>!vex_remove &lt;Operator&gt;</code></td><td>удалить (отказ, пока нужен другим)</td></tr>
+<tr><td><code>!vex_update &lt;Operator&gt;</code></td><td>переустановить из источников</td></tr>
+<tr><td><code>!vex_list</code></td><td>установленные</td></tr>
+<tr><td><code>!vex_info &lt;Operator&gt;</code></td><td>манифест + глаголы</td></tr>
+<tr><td><code>!vex_search &lt;term&gt;</code></td><td>поиск по хранилищу и исходникам</td></tr>
+<tr><td><code>!vex_operator_new &lt;Op&gt;</code></td><td>шаблон: манифест + C + пример</td></tr>
+<tr><td><code>!vex_operator_build [dir]</code></td><td>собрать entry-DLL (нужен gcc)</td></tr>
+<tr><td><code>!vex_operator_install &lt;dir&gt;</code></td><td>установить явный каталог</td></tr>
+<tr><td><code>!vex_registry_add &lt;dir|http&gt;</code></td><td>добавить источник операторов</td></tr>
+<tr><td><code>!vex_registry_list</code></td><td>источники</td></tr>
+<tr><td><code>!vex_registry_remove &lt;dir|http&gt;</code></td><td>убрать источник</td></tr>
+</table>
+
+<h2>3. Цех: fmt / lint / test / debug / lsp</h2>
+<table>
+<tr><th>Команда</th><th>Смысл</th></tr>
+<tr><td><code>!vex_fmt &lt;file.vx&gt; [-w]</code></td><td>ровные отступы; <code>-w</code> — перезапись</td></tr>
+<tr><td><code>!vex_lint &lt;file.vx&gt;</code></td><td>статика без запуска (0 чисто / 1 ворчит / 2 бито)</td></tr>
+<tr><td><code>!vex_test &lt;file.vx&gt;</code></td><td>прогнать <code>&amp; test_*</code>, мокро — PASS</td></tr>
+<tr><td><code>!vex_debug &lt;file.vx&gt;</code></td><td>шаг по VM: <code>s r g v d q</code></td></tr>
+<tr><td><code>!vex_lsp</code></td><td>stdio-сервер для редакторов</td></tr>
+</table>
+
+<h2>3. Типичные сессии</h2>
+<pre><code>vexel.exe !vex_run examples/gui_hello.vx
+
+vexel.exe !vex_add VexGUI
+
+  VEXEL
+
+  Operator: VexGUI
+  Version:  1.0.0
+
+  Installing...
+
+  [OK] Metadata
+  [OK] Dependencies
+  [OK] Native module
+  [OK] Registration
+
+  VexGUI installed.</code></pre>
+<pre class="err"><code>vexel.exe !vex_add Nope
+  Operator not found: Nope</code></pre>
+
+<div class="warn"><b>Для .bat-файлов:</b> держите delayed expansion выключенным (иначе <code>!</code> съедается) и CRLF-окончания строк (иначе cmd прыгает по файлу). Обе грабли реально встречались в этом проекте.</div>
+
+<footer>Vexel 0.1 · <a href="index.html">Обзор</a> · дальше: <a href="operators.html">менеджер</a>.</footer>
+</main>
+</div>
+</body>
+</html>
