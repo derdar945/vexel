@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#define VEXEL_VERSION "0.1.0"
+#define VEXEL_VERSION "0.2.0"
 #define VEXEL_MAGIC "VXB1"
 #define VEXEL_MAGIC2 "VXB2"
 

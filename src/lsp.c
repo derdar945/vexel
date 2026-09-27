@@ -474,7 +474,7 @@ int vx_lsp_run(void) {
                     "{\"capabilities\":{\"textDocumentSync\":1,"
                     "\"hoverProvider\":true,\"completionProvider\":{},"
                     "\"definitionProvider\":true,\"documentSymbolProvider\":true},"
-                    "\"serverInfo\":{\"name\":\"vexel-lsp\",\"version\":\"0.1.0\"}}");
+                    "\"serverInfo\":{\"name\":\"vexel-lsp\",\"version\":\"0.2.0\"}}");
         } else if (strcmp(method, "initialized") == 0) {
             /* no-op */
         } else if (strcmp(method, "shutdown") == 0) {
