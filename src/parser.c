@@ -66,6 +66,7 @@ void vx_expr_free(VxExpr *e) {
             vx_expr_free(e->u.binary.rhs);
             break;
         case E_CALL:
+            free(e->u.call.op);
             free(e->u.call.name);
             for (int i = 0; i < e->u.call.nargs; i++) vx_expr_free(e->u.call.args[i]);
             free(e->u.call.args);
@@ -210,6 +211,63 @@ static VxExpr *parse_primary(Parser *p) {
 static VxExpr *parse_summon(Parser *p) {
     VxExpr *prim = parse_primary(p);
     if (!prim) return NULL;
+    /* Op.verb # ... — qualified summon into one named operator.
+       Only when two names join with a dot AND # follows: otherwise
+       leave the tokens alone (`.` also ends blocks). Checked before
+       the plain-`#` test, so `VexSYS.tick #` never reads as stray. */
+    char *op = NULL;
+    if (prim->kind == E_VAR && p->pos + 2 < p->t->len &&
+        p->t->data[p->pos].kind == T_DOT &&
+        p->t->data[p->pos + 1].kind == T_IDENT &&
+        p->t->data[p->pos + 2].kind == T_HASH) {
+        op = prim->u.varname;
+        prim->u.varname = NULL;
+        int l0 = prim->line, c0 = prim->col;
+        free(prim);
+        prim = NULL;
+        char *verb = vx_strdup(p->t->data[p->pos + 1].lexeme);
+        if (!verb) {
+            free(op);
+            return NULL;
+        }
+        p->pos += 2;
+        VxExpr *e = new_expr(E_CALL, l0, c0);
+        if (!e) {
+            free(op);
+            free(verb);
+            return NULL;
+        }
+        e->u.call.op = op;
+        e->u.call.name = verb;
+        e->u.call.args = NULL;
+        e->u.call.nargs = 0;
+        nexttok(p); /* # */
+        if (can_start_expr(peek(p)->kind)) {
+            VxExpr **args = NULL;
+            int n = 0, cap = 0;
+            for (;;) {
+                VxExpr *a = parse_or(p);
+                if (!a) {
+                    for (int i = 0; i < n; i++) vx_expr_free(args[i]);
+                    free(args);
+                    vx_expr_free(e);
+                    return NULL;
+                }
+                if (n + 1 > cap) {
+                    int nc = cap ? cap * 2 : 4;
+                    VxExpr **ni = (VxExpr **)realloc(args, (size_t)nc * sizeof(VxExpr *));
+                    if (!ni) { vx_expr_free(a); for (int i = 0; i < n; i++) vx_expr_free(args[i]); free(args); vx_expr_free(e); return NULL; }
+                    args = ni; cap = nc;
+                }
+                args[n++] = a;
+                if (at(p, T_COMMA)) { nexttok(p); continue; }
+                break;
+            }
+            e->u.call.args = args;
+            e->u.call.nargs = n;
+        }
+        return e;
+    }
     if (!at(p, T_HASH)) return prim;
     if (prim->kind != E_VAR) {
         vx_error_set(p->err, prim->line, prim->col, "summon needs a name before #");
@@ -222,7 +280,11 @@ static VxExpr *parse_summon(Parser *p) {
     free(prim);
     nexttok(p); /* # */
     VxExpr *e = new_expr(E_CALL, l, c);
-    if (!e) { free(name); return NULL; }
+    if (!e) {
+        free(name);
+        return NULL;
+    }
+    e->u.call.op = NULL;
     e->u.call.name = name;
     e->u.call.args = NULL;
     e->u.call.nargs = 0;
@@ -238,13 +300,13 @@ static VxExpr *parse_summon(Parser *p) {
             VxExpr *a = parse_or(p);
             if (!a) {
                 for (int i = 0; i < n; i++) vx_expr_free(args[i]);
-                free(args); free(name); free(e);
+                free(args); free(op); free(name); free(e);
                 return NULL;
             }
             if (n + 1 > cap) {
                 int nc = cap ? cap * 2 : 4;
                 VxExpr **ni = (VxExpr **)realloc(args, (size_t)nc * sizeof(VxExpr *));
-                if (!ni) { vx_expr_free(a); for (int i = 0; i < n; i++) vx_expr_free(args[i]); free(args); free(name); free(e); return NULL; }
+                if (!ni) { vx_expr_free(a); for (int i = 0; i < n; i++) vx_expr_free(args[i]); free(args); free(op); free(name); free(e); return NULL; }
                 args = ni; cap = nc;
             }
             args[n++] = a;

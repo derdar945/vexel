@@ -34,6 +34,19 @@ an installed operator (top level only). After that its verbs summon
 with `#`: `> version #`. Arity is checked at compile time from the
 operator manifest. Operator fail rescues with `??` like any fail.
 
+Unqualified, the first attached operator that provides the verb wins.
+Name it to pick exactly:
+
+```text
+@ VexSYS
+@ VexGame
+> VexSYS.tick #       milliseconds here (VexSYS owns it)
+> VexGame.tick # g    frame count there (VexGame owns it)
+```
+
+`Op.verb` needs `@ Op` on the bench; a missing operator or verb
+fails the check with the place spelled out.
+
 ## Circles, asks, tools
 
 ```text

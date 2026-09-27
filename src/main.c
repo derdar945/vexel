@@ -330,6 +330,7 @@ static void help(void) {
     printf("  Language marks: @ cell   & tool   > show   ? ! . ask\n");
     printf("                  * . circle   = give   # summon   ?? rescue\n");
     printf("  Place an operator:  @ VexGUI\n");
+    printf("  Qualified summon: VexGUI.show # w (names the operator)\n");
     printf("  Docs: docs/ (language, operators, vexgui, cli)\n\n");
 }
 

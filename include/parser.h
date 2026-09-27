@@ -32,7 +32,7 @@ struct VxExpr {
         char *varname;
         struct { VxUnOp op; VxExpr *rhs; } unary;
         struct { VxBinOp op; VxExpr *lhs; VxExpr *rhs; } binary;
-        struct { char *name; VxExpr **args; int nargs; } call;
+        struct { char *op; char *name; VxExpr **args; int nargs; } call;
         struct { VxExpr *lhs; VxExpr *rhs; } rescue;
         struct { VxExpr **items; int nitems; } vec;
     } u;

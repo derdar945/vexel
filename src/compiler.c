@@ -236,6 +236,50 @@ static bool compile_expr(Ctx *c, VxExpr *e) {
             return true;
         }
         case E_CALL: {
+            /* Op.verb # ... — summon into one named operator.
+               Unqualified keeps the old rule: the first attached
+               operator that provides the verb wins. */
+            if (e->u.call.op) {
+                int oi = vx_program_find_op(p, e->u.call.op);
+                if (oi < 0) {
+                    vx_error_set(c->err, e->line, e->col,
+                        "summon '%s.%s': place @ %s first",
+                        e->u.call.op, e->u.call.name, e->u.call.op);
+                    return false;
+                }
+                int fi = -1;
+                for (int f = 0; f < p->ops[oi].nfuncs; f++) {
+                    if (strcmp(p->ops[oi].funcs[f].name, e->u.call.name) == 0) {
+                        fi = f;
+                        break;
+                    }
+                }
+                if (fi < 0) {
+                    vx_error_set(c->err, e->line, e->col,
+                        "'%s' has no verb '%s'",
+                        e->u.call.op, e->u.call.name);
+                    return false;
+                }
+                int want = p->ops[oi].funcs[fi].arity;
+                if (e->u.call.nargs != want) {
+                    vx_error_set(c->err, e->line, e->col,
+                        "'%s.%s' wants %d, summoned with %d",
+                        e->u.call.op, e->u.call.name, want,
+                        e->u.call.nargs);
+                    return false;
+                }
+                for (int i = 0; i < e->u.call.nargs; i++) {
+                    if (!compile_expr(c, e->u.call.args[i])) return false;
+                }
+                int ref = vx_program_add_callref(p, oi, fi,
+                                                 e->u.call.nargs);
+                if (ref < 0) {
+                    vx_error_set(c->err, e->line, e->col, "out of memory");
+                    return false;
+                }
+                vx_tool_emit(c->cur, VX_CALL_OP, ref, 0);
+                return true;
+            }
             int ti = find_tool(p, e->u.call.name);
             if (ti >= 0) {
                 int want = p->tools[ti].nparams;

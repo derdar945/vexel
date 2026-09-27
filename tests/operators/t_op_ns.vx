@@ -1,0 +1,6 @@
+; qualified summons hit the named operator, not the first match
+@ VexSYS
+@ VexGUI
+> VexSYS.version #
+> VexGUI.version #
+> version #

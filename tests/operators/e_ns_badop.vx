@@ -1,0 +1,3 @@
+; unknown operator in a qualified summon fails the check
+@ VexSYS
+> Nope.version #

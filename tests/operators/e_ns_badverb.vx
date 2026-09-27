@@ -1,0 +1,3 @@
+; unknown verb in a qualified summon fails the check
+@ VexSYS
+> VexSYS.nosuchverb #
