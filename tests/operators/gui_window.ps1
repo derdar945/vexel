@@ -33,7 +33,10 @@ Add-Type -TypeDefinition $code
 function Fail($m) { Write-Output "FAIL $m"; exit 1 }
 
 $out = [IO.Path]::GetTempFileName()
-$p = Start-Process -FilePath $Vexel -ArgumentList "!vex_run $Bench" -PassThru -RedirectStandardOutput $out
+# NOTE: bench path rides in its own quoted argv slot: an unquoted path
+# with spaces (or non-ASCII) splits into two argv entries and vexel
+# reports "cannot read <first half>".
+$p = Start-Process -FilePath $Vexel -ArgumentList @('!vex_run', ('"' + $Bench + '"')) -PassThru -RedirectStandardOutput $out
 try {
   $hw = [IntPtr]::Zero
   for ($i = 0; $i -lt 40 -and $hw -eq [IntPtr]::Zero; $i++) {
