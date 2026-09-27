@@ -32,7 +32,10 @@ typedef enum {
     UC_INPUT = 2,
     UC_CARD = 3,
     UC_PROG = 4,
-    UC_SEP = 5
+    UC_SEP = 5,
+    UC_SLIDE = 6,
+    UC_LIST = 7,
+    UC_SEGS = 8
 } UCtl;
 
 typedef struct UObj {
@@ -162,23 +165,39 @@ static COLORREF u_shade(COLORREF c, int d) {
     return RGB(r, g, b);
 }
 
-/* poll hover for owner-drawn buttons (cheap, throttled) */
+/* poll hover for buttons + live drag for sliders (cheap, throttled) */
 static void u_poll_hover(void) {
     DWORD now = GetTickCount();
-    if (now - g_hover_at < 80) return;
+    if (now - g_hover_at < 60) return;
     g_hover_at = now;
     POINT pt;
     if (!GetCursorPos(&pt)) return;
+    int lmb = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
     for (int i = 0; i < g_n; i++) {
-        if (!g_o[i].alive || g_o[i].kind != U_CTL ||
-            g_o[i].ctlkind != UC_BTN)
+        if (!g_o[i].alive || g_o[i].kind != U_CTL) continue;
+        if (g_o[i].ctlkind != UC_BTN && g_o[i].ctlkind != UC_SLIDE)
             continue;
         RECT r;
         if (!GetWindowRect(g_o[i].hwnd, &r)) continue;
-        int h = PtInRect(&r, pt);
-        if (h != g_o[i].hover) {
-            g_o[i].hover = h;
-            InvalidateRect(g_o[i].hwnd, NULL, FALSE);
+        if (g_o[i].ctlkind == UC_BTN) {
+            int h = PtInRect(&r, pt);
+            if (h != g_o[i].hover) {
+                g_o[i].hover = h;
+                InvalidateRect(g_o[i].hwnd, NULL, FALSE);
+            }
+        } else if (lmb && PtInRect(&r, pt)) {
+            /* drag: value follows the cursor, no capture needed */
+            int w = r.right - r.left;
+            int pad = 14;
+            int p = 0;
+            if (w > pad * 2 + 4)
+                p = ((pt.x - r.left - pad) * 100) / (w - pad * 2);
+            if (p < 0) p = 0;
+            if (p > 100) p = 100;
+            if (p != g_o[i].pct) {
+                g_o[i].pct = p;
+                InvalidateRect(g_o[i].hwnd, NULL, FALSE);
+            }
         }
     }
 }
@@ -269,6 +288,85 @@ static void u_draw_sep(const DRAWITEMSTRUCT *di) {
     DeleteObject(p);
 }
 
+static void u_draw_slide(const DRAWITEMSTRUCT *di, UObj *o) {
+    RECT r = di->rcItem;
+    int cy = (r.top + r.bottom) / 2;
+    RECT tr = r;
+    tr.left += 14;
+    tr.right -= 14;
+    tr.top = cy - 4;
+    tr.bottom = cy + 4;
+    u_draw_round(di->hDC, &tr, U_TRACK, U_LINE, 8);
+    int w = tr.right - tr.left;
+    int fx = tr.left + (w * o->pct) / 100;
+    if (fx > tr.left) {
+        RECT f = tr;
+        f.right = fx;
+        u_draw_round(di->hDC, &f, o->color, u_shade(o->color, 30), 8);
+    }
+    /* knob */
+    {
+        int kx = fx, ky = cy, kr = 9;
+        HBRUSH b = CreateSolidBrush(u_shade(o->color, 40));
+        HPEN p = CreatePen(PS_SOLID, 2, RGB(255, 255, 255));
+        HGDIOBJ ob = SelectObject(di->hDC, b);
+        HGDIOBJ op = SelectObject(di->hDC, p);
+        Ellipse(di->hDC, kx - kr, ky - kr, kx + kr, ky + kr);
+        SelectObject(di->hDC, ob);
+        SelectObject(di->hDC, op);
+        DeleteObject(b);
+        DeleteObject(p);
+    }
+}
+
+/* segmented tabs: titles live in the window text joined with \n,
+ * selected index in pct. Equal slices, pill look. */
+static void u_draw_segs(const DRAWITEMSTRUCT *di, UObj *o) {
+    RECT r = di->rcItem;
+    u_draw_round(di->hDC, &r, U_TRACK, U_LINE, 16);
+    wchar_t txt[512];
+    txt[0] = 0;
+    GetWindowTextW(di->hwndItem, txt, 512);
+    /* count slices */
+    int n = 1;
+    for (wchar_t *q = txt; *q; q++)
+        if (*q == L'\n') n++;
+    if (n < 1) n = 1;
+    int w = r.right - r.left;
+    int sel = o->pct;
+    if (sel < 0) sel = 0;
+    if (sel >= n) sel = n - 1;
+    RECT s = r;
+    s.left += 3 + (sel * (w - 6)) / n;
+    s.right = r.left + 3 + ((sel + 1) * (w - 6)) / n;
+    s.top += 3;
+    s.bottom -= 3;
+    u_draw_round(di->hDC, &s, o->color, u_shade(o->color, 30), 12);
+    /* slice labels */
+    SetBkMode(di->hDC, TRANSPARENT);
+    HFONT f = u_font(13, 0);
+    if (f) SelectObject(di->hDC, f);
+    int i = 0;
+    wchar_t *seg = txt;
+    for (;;) {
+        wchar_t *nl = wcschr(seg, L'\n');
+        wchar_t save = 0;
+        if (nl) {
+            save = *nl;
+            *nl = 0;
+        }
+        RECT tr = r;
+        tr.left += (i * w) / n;
+        tr.right = r.left + ((i + 1) * w) / n;
+        SetTextColor(di->hDC, i == sel ? RGB(255, 255, 255) : U_MUT);
+        DrawTextW(di->hDC, seg, -1, &tr, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+        if (!nl) break;
+        *nl = save;
+        seg = nl + 1;
+        i++;
+    }
+}
+
 static LRESULT CALLBACK u_wnd(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     if (msg == WM_COMMAND) {
         int id = LOWORD(wp);
@@ -278,6 +376,29 @@ static LRESULT CALLBACK u_wnd(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             g_o[ci].kind == U_CTL) {
             if (code == BN_CLICKED && g_o[ci].ctlkind == UC_BTN)
                 g_o[ci].clicked = 1;
+            if (code == STN_CLICKED && g_o[ci].ctlkind == UC_SEGS) {
+                /* pick slice under the cursor */
+                POINT pt;
+                RECT r;
+                if (GetCursorPos(&pt) &&
+                    GetWindowRect(g_o[ci].hwnd, &r)) {
+                    wchar_t txt[512];
+                    txt[0] = 0;
+                    GetWindowTextW(g_o[ci].hwnd, txt, 512);
+                    int n = 1;
+                    for (wchar_t *q = txt; *q; q++)
+                        if (*q == L'\n') n++;
+                    int w = r.right - r.left;
+                    int s = 0;
+                    if (w > 0) s = ((pt.x - r.left) * n) / w;
+                    if (s < 0) s = 0;
+                    if (s >= n) s = n - 1;
+                    if (s != g_o[ci].pct) {
+                        g_o[ci].pct = s;
+                        InvalidateRect(g_o[ci].hwnd, NULL, FALSE);
+                    }
+                }
+            }
         }
         return 0;
     }
@@ -291,6 +412,8 @@ static LRESULT CALLBACK u_wnd(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             else if (o->ctlkind == UC_CARD) u_draw_card(di, o);
             else if (o->ctlkind == UC_PROG) u_draw_prog(di, o);
             else if (o->ctlkind == UC_SEP) u_draw_sep(di);
+            else if (o->ctlkind == UC_SLIDE) u_draw_slide(di, o);
+            else if (o->ctlkind == UC_SEGS) u_draw_segs(di, o);
             return TRUE;
         }
         return FALSE;
@@ -313,6 +436,16 @@ static LRESULT CALLBACK u_wnd(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         SetTextColor(dc, U_TEXT);
         SetBkColor(dc, U_EDITBG);
         if (wi >= 0 && g_o[wi].editb) return (INT_PTR)g_o[wi].editb;
+        return (INT_PTR)g_bg;
+    }
+    if (msg == WM_CTLCOLORLISTBOX) {
+        HDC dc = (HDC)wp;
+        SetTextColor(dc, U_TEXT);
+        SetBkColor(dc, U_EDITBG);
+        {
+            int wi = u_find(hwnd);
+            if (wi >= 0 && g_o[wi].editb) return (INT_PTR)g_o[wi].editb;
+        }
         return (INT_PTR)g_bg;
     }
     if (msg == WM_ERASEBKGND) {
@@ -732,6 +865,184 @@ static int u_clicked(const VxOpApi *api, VxOpVal **a, int argc,
     return *out ? 0 : 1;
 }
 
+/* ui_slide # w, x, y, ww, color — drag slider, value via ui_sget */
+static int u_slide(const VxOpApi *api, VxOpVal **a, int argc, VxOpVal **out) {
+    (void)argc;
+    double x = 0, y = 0, ww = 0, c = 0;
+    if (!api->as_num(a[1], &x) || !api->as_num(a[2], &y) ||
+        !api->as_num(a[3], &ww) || !api->as_num(a[4], &c))
+        return 1;
+    if (ww < 60) ww = 60;
+    if (u_child(api, a[0], L"STATIC", SS_OWNERDRAW, "", 0, x, y, ww, 28,
+                UC_SLIDE, out))
+        return 1;
+    {
+        double d = 0;
+        api->as_num(*out, &d);
+        int idx = (int)(long)d - 1;
+        g_o[idx].color = u_rgb(c);
+        g_o[idx].pct = 0;
+    }
+    return 0;
+}
+
+/* ui_sget # h — slider value 0..100 */
+static int u_sget(const VxOpApi *api, VxOpVal **a, int argc, VxOpVal **out) {
+    (void)argc;
+    int i = 0;
+    if (!u_need_ctl(api, a[0], UC_SLIDE, &i)) return 1;
+    u_pump();
+    *out = api->make_num((double)g_o[i].pct);
+    return *out ? 0 : 1;
+}
+
+/* ui_list # w, x, y, ww, hh — dark listbox */
+static int u_list(const VxOpApi *api, VxOpVal **a, int argc, VxOpVal **out) {
+    (void)argc;
+    double x = 0, y = 0, ww = 0, hh = 0;
+    int idx = 0;
+    if (!api->as_num(a[1], &x) || !api->as_num(a[2], &y) ||
+        !api->as_num(a[3], &ww) || !api->as_num(a[4], &hh))
+        return 1;
+    if (ww < 40) ww = 40;
+    if (hh < 40) hh = 40;
+    if (u_child(api, a[0], L"LISTBOX", WS_BORDER | WS_VSCROLL | LBS_NOTIFY,
+                "", 0, x, y, ww, hh, UC_LIST, out))
+        return 1;
+    {
+        double d = 0;
+        api->as_num(*out, &d);
+        idx = (int)(long)d - 1;
+    }
+    SendMessageW(g_o[idx].hwnd, WM_SETFONT, (WPARAM)u_font(14, 0), 1);
+    return 0;
+}
+
+/* ui_lset # h, vec — refill from a vec of texts/numbers */
+static int u_lset(const VxOpApi *api, VxOpVal **a, int argc, VxOpVal **out) {
+    (void)argc;
+    int i = 0;
+    size_t n = 0;
+    if (!u_need_ctl(api, a[0], UC_LIST, &i)) return 1;
+    if (!api->vec_len(a[1], &n)) return 1;
+    SendMessageW(g_o[i].hwnd, LB_RESETCONTENT, 0, 0);
+    for (size_t k = 0; k < n; k++) {
+        VxOpVal *item = api->vec_get(a[1], k);
+        if (!item) {
+            SendMessageW(g_o[i].hwnd, LB_RESETCONTENT, 0, 0);
+            return 1;
+        }
+        const char *s = NULL;
+        size_t sl = 0;
+        double d = 0;
+        wchar_t *w = NULL;
+        if (api->as_text(item, &s, &sl)) {
+            w = u_w(s, sl);
+        } else if (api->as_num(item, &d)) {
+            char nb[64];
+            snprintf(nb, sizeof(nb), "%g", d);
+            w = u_w(nb, strlen(nb));
+        }
+        api->release(item);
+        if (!w) {
+            SendMessageW(g_o[i].hwnd, LB_RESETCONTENT, 0, 0);
+            return 1;
+        }
+        SendMessageW(g_o[i].hwnd, LB_ADDSTRING, 0, (LPARAM)w);
+        free(w);
+    }
+    *out = api->make_num(1);
+    return *out ? 0 : 1;
+}
+
+/* ui_lsel # h — chosen row text, fail if none */
+static int u_lsel(const VxOpApi *api, VxOpVal **a, int argc, VxOpVal **out) {
+    (void)argc;
+    int i = 0;
+    if (!u_need_ctl(api, a[0], UC_LIST, &i)) return 1;
+    LRESULT sel = SendMessageW(g_o[i].hwnd, LB_GETCURSEL, 0, 0);
+    if (sel == LB_ERR) return 1;
+    LRESULT L = SendMessageW(g_o[i].hwnd, LB_GETTEXTLEN, (WPARAM)sel, 0);
+    if (L == LB_ERR || L < 0 || L > 100000) return 1;
+    wchar_t *w = (wchar_t *)malloc(((size_t)L + 1) * sizeof(wchar_t));
+    if (!w) return 1;
+    SendMessageW(g_o[i].hwnd, LB_GETTEXT, (WPARAM)sel, (LPARAM)w);
+    w[L] = 0;
+    size_t m = 0;
+    char *s = u_u8(w, (int)L, &m);
+    free(w);
+    if (!s) return 1;
+    *out = api->make_text(s, m);
+    free(s);
+    return *out ? 0 : 1;
+}
+
+/* ui_segs # w, x, y, ww, titles — pill tab switch from a vec of texts */
+static int u_segs(const VxOpApi *api, VxOpVal **a, int argc, VxOpVal **out) {
+    (void)argc;
+    double x = 0, y = 0, ww = 0;
+    size_t n = 0;
+    if (!api->as_num(a[1], &x) || !api->as_num(a[2], &y) ||
+        !api->as_num(a[3], &ww))
+        return 1;
+    if (ww < 80) ww = 80;
+    if (!api->vec_len(a[4], &n) || n == 0 || n > 12) return 1;
+    /* join titles with \n into one window text */
+    size_t cap = 64, len = 0;
+    char *buf = (char *)malloc(cap);
+    if (!buf) return 1;
+    for (size_t k = 0; k < n; k++) {
+        VxOpVal *item = api->vec_get(a[4], k);
+        if (!item) {
+            free(buf);
+            return 1;
+        }
+        const char *s = NULL;
+        size_t sl = 0;
+        int ok = api->as_text(item, &s, &sl);
+        api->release(item);
+        if (!ok) {
+            free(buf);
+            return 1;
+        }
+        if (len + sl + 2 > cap) {
+            size_t nc = (cap + sl + 64) * 2;
+            char *nb = (char *)realloc(buf, nc);
+            if (!nb) {
+                free(buf);
+                return 1;
+            }
+            buf = nb;
+            cap = nc;
+        }
+        if (k) buf[len++] = '\n';
+        memcpy(buf + len, s, sl);
+        len += sl;
+    }
+    int rc = u_child(api, a[0], L"STATIC", SS_OWNERDRAW | SS_NOTIFY, buf,
+                     len, x, y, ww, 36, UC_SEGS, out);
+    free(buf);
+    if (rc) return 1;
+    {
+        double d = 0;
+        api->as_num(*out, &d);
+        int idx = (int)(long)d - 1;
+        g_o[idx].color = u_rgb(8154367);
+        g_o[idx].pct = 0;
+    }
+    return 0;
+}
+
+/* ui_seg # h — selected tab index, 0-based */
+static int u_seg(const VxOpApi *api, VxOpVal **a, int argc, VxOpVal **out) {
+    (void)argc;
+    int i = 0;
+    if (!u_need_ctl(api, a[0], UC_SEGS, &i)) return 1;
+    u_pump();
+    *out = api->make_num((double)g_o[i].pct);
+    return *out ? 0 : 1;
+}
+
 /* ui_run # w, "step" — message loop, step wet = keep going */
 static int u_run(const VxOpApi *api, VxOpVal **a, int argc, VxOpVal **out) {
     (void)argc;
@@ -779,6 +1090,13 @@ static const VxOpFuncInfo g_funcs[] = {
     { "ui_get", 1, u_get },
     { "ui_set", 2, u_set },
     { "ui_clicked", 1, u_clicked },
+    { "ui_slide", 5, u_slide },
+    { "ui_sget", 1, u_sget },
+    { "ui_list", 5, u_list },
+    { "ui_lset", 2, u_lset },
+    { "ui_lsel", 1, u_lsel },
+    { "ui_segs", 5, u_segs },
+    { "ui_seg", 1, u_seg },
 };
 
 #ifdef _WIN32
@@ -792,7 +1110,7 @@ VXOP_EXPORT const VxOpInfo *vxop_open(const VxOpApi *api) {
     (void)api;
     info.abi_version = VXOP_ABI_VERSION;
     info.name = "VexUI";
-    info.version = "1.0.0";
+    info.version = "1.1.0";
     info.nfuncs = (int)(sizeof(g_funcs) / sizeof(g_funcs[0]));
     info.funcs = g_funcs;
     return &info;
